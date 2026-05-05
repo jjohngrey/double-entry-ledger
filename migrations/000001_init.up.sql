@@ -1,0 +1,1 @@
+-- empty migrations file to test the migration system
