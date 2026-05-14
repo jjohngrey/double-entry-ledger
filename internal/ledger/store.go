@@ -1,6 +1,7 @@
 package ledger
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -43,4 +44,15 @@ func (s *Store) CreateAccount(name string, accType AccountType) (*Account, error
 
 	s.accounts[id] = *account
 	return account, nil
+}
+
+func (s *Store) GetBalance(accountID string) (decimal.Decimal, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	account, exists := s.accounts[accountID]
+	if !exists {
+		return decimal.Zero, fmt.Errorf("Account with ID %s not found", accountID)
+	}
+	return account.Balance, nil
 }

@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jjohngrey/double-entry-ledger/internal/http"
+	httphandlers "github.com/jjohngrey/double-entry-ledger/internal/http"
 	"github.com/jjohngrey/double-entry-ledger/internal/ledger"
 )
 
@@ -27,7 +27,10 @@ func main() {
 	})
 
 	// create account
-	r.Post("/accounts", handlers.CreateAccountHandler(store))
+	r.Post("/accounts", httphandlers.CreateAccountHandler(store))
+
+	// get balance
+	r.Get("/balance", httphandlers.GetBalanceHandler(store))
 
 	// server startup message
 	fmt.Println("Starting server on :3000")

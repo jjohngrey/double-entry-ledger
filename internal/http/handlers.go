@@ -1,4 +1,4 @@
-package handlers
+package http
 
 import (
 	"encoding/json"
@@ -10,6 +10,10 @@ import (
 type CreateAccountRequest struct {
 	Name string `json:"name"`
 	Type ledger.AccountType `json:"type"`
+}
+
+type GetBalanceRequest struct {
+	AccountID string `json:"account_id"`
 }
 
 type ErrorResponse struct {
@@ -36,5 +40,28 @@ func CreateAccountHandler(store *ledger.Store) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(account)
+	}
+}
+
+func GetBalanceHandler(store *ledger.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req GetBalanceRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request body"})
+			return
+		}
+
+		balance, err := store.GetBalance(req.AccountID)
+
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{"balance": balance})
 	}
 }
