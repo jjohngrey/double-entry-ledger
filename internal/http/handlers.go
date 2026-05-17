@@ -7,33 +7,23 @@ import (
 	"github.com/jjohngrey/double-entry-ledger/internal/ledger"
 )
 
-type CreateAccountRequest struct {
-	Name string `json:"name"`
-	Type ledger.AccountType `json:"type"`
-}
-
-type GetBalanceRequest struct {
-	AccountID string `json:"account_id"`
-}
-
-type ErrorResponse struct {
-	Error string `json:"error"`
+func writeError(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(ledger.ErrorResponse{Error: msg})
 }
 
 func CreateAccountHandler(store *ledger.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req CreateAccountRequest
+		var req ledger.CreateAccountRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request body"})
+			writeError(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
-		
-		account, err := store.CreateAccount(req.Name, req.Type)
 
+		account, err := store.CreateAccount(req.Name, req.Type)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -45,23 +35,40 @@ func CreateAccountHandler(store *ledger.Store) http.HandlerFunc {
 
 func GetBalanceHandler(store *ledger.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req GetBalanceRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(ErrorResponse{Error: "Invalid request body"})
+		accountID := r.URL.Query().Get("account_id")
+		if accountID == "" {
+			writeError(w, http.StatusBadRequest, "account_id query parameter is required")
 			return
 		}
 
-		balance, err := store.GetBalance(req.AccountID)
-
+		balance, err := store.GetBalance(accountID)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]interface{}{"balance": balance})
+	}
+}
+
+func CreateTransactionHandler(store *ledger.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req ledger.CreateTransactionRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		transaction, err := store.CreateTransaction(req.Entries)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(transaction)
 	}
 }

@@ -32,6 +32,9 @@ func main() {
 	// get balance
 	r.Get("/balance", httphandlers.GetBalanceHandler(store))
 
+	// create transaction
+	r.Post("/transactions", httphandlers.CreateTransactionHandler(store))
+
 	// server startup message
 	fmt.Println("Starting server on :3000")
 

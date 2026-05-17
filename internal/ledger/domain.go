@@ -6,6 +6,26 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// REQUEST MODELS
+type CreateAccountRequest struct {
+	Name string      `json:"name"`
+	Type AccountType `json:"type"`
+}
+
+type EntryRequest struct {
+	AccountID string          `json:"account_id"`
+	Credit    decimal.Decimal `json:"credit"`
+	Debit     decimal.Decimal `json:"debit"`
+}
+
+type CreateTransactionRequest struct {
+	Entries []EntryRequest `json:"entries"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 // ENUMERATIONS
 type AccountType string
 

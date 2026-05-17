@@ -18,13 +18,13 @@ func ValidateAccount(name string, typ AccountType) error {
 	}
 }
 
-func ValidateTransaction(txn *Transaction) error {
-	if len(txn.Entries) < 2 {
+func ValidateTransaction(entries []EntryRequest) error {
+	if len(entries) < 2 {
 		return fmt.Errorf("Transaction must have at least two entries")
 	}
 
 	var totalDebit, totalCredit decimal.Decimal
-	for _, entry := range txn.Entries {
+	for _, entry := range entries {
 		if entry.AccountID == "" {
 			return fmt.Errorf("Entry account ID cannot be empty")
 		}
