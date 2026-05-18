@@ -85,27 +85,39 @@ func TestGetBalance_SignFlipByAccountType(t *testing.T) {
 		wantBal int64
 	}{
 		{AssetType, 100, 0, 100},     // debit-normal: +100
+		{AssetType, 0, 100, -100},    // credit-normal: -100
 		{ExpenseType, 100, 0, 100},   // debit-normal: +100
 		{LiabilityType, 0, 100, 100}, // credit-normal: stored -100, returned +100
 		{EquityType, 0, 100, 100},    // credit-normal: stored -100, returned +100
 		{RevenueType, 0, 100, 100},   // credit-normal: stored -100, returned +100
 	}
 
+	s := NewMemoryStore()
 	for _, tc := range cases {
-		s := NewMemoryStore()
-		subject, _ := s.CreateAccount("subject", tc.accType)
-		other, _ := s.CreateAccount("other", AssetType)
+		subject, err1 := s.CreateAccount("subject", tc.accType)
+		other, err2 := s.CreateAccount("other", AssetType)
 
-		s.CreateTransaction([]EntryRequest{
+		if err1 != nil {
+			t.Fatalf("Unexpected error creating subject account: %v", err1)
+		}
+		if err2 != nil {
+			t.Fatalf("Unexpected error creating other account: %v", err2)
+		}
+
+		_, err := s.CreateTransaction([]EntryRequest{
 			{AccountID: subject.ID, Debit: decimal.NewFromInt(tc.debit), Credit: decimal.NewFromInt(tc.credit)},
 			{AccountID: other.ID, Debit: decimal.NewFromInt(tc.credit), Credit: decimal.NewFromInt(tc.debit)},
 		})
+		if err != nil {
+			t.Fatalf("Unexpected error creating transaction: %v", err)
+		}
 
 		got, _ := s.GetBalance(subject.ID)
 		want := decimal.NewFromInt(tc.wantBal)
 		if !got.Equal(want) {
 			t.Errorf("%s: got %s, want %s", tc.accType, got, want)
 		}
+
 	}
 }
 
@@ -192,34 +204,45 @@ func TestCreateTransaction_Unbalanced(t *testing.T) {
 
 func TestCreateTransaction_InvalidInput(t *testing.T) {
 	s := NewMemoryStore()
-	
-	var acc, err = s.CreateAccount("existent", AssetType)
-	if err != nil {
-		t.Fatalf("Unexpected error creating account: %v", err)
+
+	var acc1, err1 = s.CreateAccount("existent1", AssetType)
+	if err1 != nil {
+		t.Fatalf("Unexpected error creating account: %v", err1)
+	}
+	var acc2, err2 = s.CreateAccount("existent2", AssetType)
+	if err2 != nil {
+		t.Fatalf("Unexpected error creating account: %v", err2)
 	}
 	cases := []struct {
 		name    string
 		entries []EntryRequest
 	}{
-		{"less than 2 entries", []EntryRequest{{AccountID: "some-id", Debit: decimal.NewFromInt(100), Credit: decimal.Zero}}},
+		{"less than 2 entries", []EntryRequest{{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero}}},
 		{"account does not exist", []EntryRequest{
-			{AccountID: acc.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
+			{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
 			{AccountID: "other-non-existent-id", Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
 		}},
 		{"negative debit", []EntryRequest{
-			{AccountID: "some-id", Debit: decimal.NewFromInt(-100), Credit: decimal.Zero},
-			{AccountID: "other-id", Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
+			{AccountID: acc1.ID, Debit: decimal.NewFromInt(-100), Credit: decimal.Zero},
+			{AccountID: acc2.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
 		}},
 		{"negative credit", []EntryRequest{
-			{AccountID: "some-id", Debit: decimal.Zero, Credit: decimal.NewFromInt(-100)},
-			{AccountID: "other-id", Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
+			{AccountID: acc1.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(-100)},
+			{AccountID: acc2.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
 		}},
 		{"debits do not equal credits", []EntryRequest{
-			{AccountID: "some-id", Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
-			{AccountID: "other-id", Debit: decimal.Zero, Credit: decimal.NewFromInt(50)},
+			{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
+			{AccountID: acc2.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(50)},
+		}},
+		{"entry with zero debit and credit", []EntryRequest{
+			{AccountID: acc1.ID, Debit: decimal.Zero, Credit: decimal.Zero},
+			{AccountID: acc2.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
+		}},
+		{"entry with both debit and credit", []EntryRequest{
+			{AccountID: acc1.ID, Debit: decimal.NewFromInt(50), Credit: decimal.NewFromInt(50)},
+			{AccountID: acc2.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
 		}},
 	}
-
 
 	for _, tc := range cases {
 		_, err := s.CreateTransaction(tc.entries)

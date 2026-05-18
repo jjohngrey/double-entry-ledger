@@ -31,6 +31,12 @@ func ValidateTransaction(entries []EntryRequest) error {
 		if entry.Debit.IsNegative() || entry.Credit.IsNegative() {
 			return fmt.Errorf("Entry amounts cannot be negative")
 		}
+		if entry.Debit.IsZero() && entry.Credit.IsZero() {
+			return fmt.Errorf("Entry must have a non-zero debit or credit amount")
+		}
+		if !entry.Debit.IsZero() && !entry.Credit.IsZero() {
+			return fmt.Errorf("Entry cannot have both debit and credit amounts")
+		}
 		totalDebit = totalDebit.Add(entry.Debit)
 		totalCredit = totalCredit.Add(entry.Credit)
 	}
