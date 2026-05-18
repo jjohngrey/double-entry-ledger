@@ -46,10 +46,11 @@ type Account struct {
 }
 
 type Entry struct {
-	ID        string          `json:"id"`
-	AccountID string          `json:"account_id"`
-	Credit    decimal.Decimal `json:"credit"`
-	Debit     decimal.Decimal `json:"debit"`
+	ID            string          `json:"id"`
+	AccountID     string          `json:"account_id"`     // FK to Account
+	TransactionID string          `json:"transaction_id"` // FK to Transaction
+	Credit        decimal.Decimal `json:"credit"`
+	Debit         decimal.Decimal `json:"debit"`
 }
 
 type Transaction struct {

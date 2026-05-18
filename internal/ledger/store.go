@@ -9,7 +9,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-
 type Store interface {
 	CreateAccount(name string, accType AccountType) (*Account, error)
 	CreateTransaction(entries []EntryRequest) (*Transaction, error)
@@ -19,10 +18,9 @@ type Store interface {
 var _ Store = (*MemoryStore)(nil) // compile-time assertion that MemoryStore implements Store
 
 type MemoryStore struct {
-	mu           sync.RWMutex       // single lock protects all three below
+	mu           sync.RWMutex
 	accounts     map[string]Account // UUID -> Account
 	transactions []Transaction
-	entries      []Entry
 }
 
 // Constructor
@@ -30,7 +28,6 @@ func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		accounts:     make(map[string]Account),
 		transactions: []Transaction{},
-		entries:      []Entry{},
 	}
 }
 
@@ -75,7 +72,7 @@ func (s *MemoryStore) CreateTransaction(entries []EntryRequest) (*Transaction, e
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	id := uuid.New().String()
+	transactionID := uuid.New().String()
 	sec := time.Now()
 
 	var transactionEntries []Entry
@@ -87,20 +84,20 @@ func (s *MemoryStore) CreateTransaction(entries []EntryRequest) (*Transaction, e
 			return nil, fmt.Errorf("Account with ID %s not found", entry.AccountID)
 		}
 	}
-	
+
 	for _, entry := range entries {
 		account := s.accounts[entry.AccountID]
 
 		// create entries
 		entryID := uuid.New().String()
 		newEntry := &Entry{
-			ID:        entryID,
-			AccountID: account.ID,
-			Credit:    entry.Credit,
-			Debit:     entry.Debit,
+			ID:            entryID,
+			AccountID:     account.ID,
+			TransactionID: transactionID,
+			Credit:        entry.Credit,
+			Debit:         entry.Debit,
 		}
 
-		s.entries = append(s.entries, *newEntry)
 		transactionEntries = append(transactionEntries, *newEntry)
 
 		// update account balance
@@ -109,7 +106,7 @@ func (s *MemoryStore) CreateTransaction(entries []EntryRequest) (*Transaction, e
 	}
 
 	transaction := &Transaction{
-		ID:        id,
+		ID:        transactionID,
 		Entries:   transactionEntries,
 		Timestamp: sec,
 	}
