@@ -9,7 +9,16 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type Store struct {
+
+type Store interface {
+	CreateAccount(name string, accType AccountType) (*Account, error)
+	CreateTransaction(entries []EntryRequest) (*Transaction, error)
+	GetBalance(accountID string) (decimal.Decimal, error)
+}
+
+var _ Store = (*MemoryStore)(nil) // compile-time assertion that MemoryStore implements Store
+
+type MemoryStore struct {
 	mu           sync.RWMutex       // single lock protects all three below
 	accounts     map[string]Account // UUID -> Account
 	transactions []Transaction
@@ -17,8 +26,8 @@ type Store struct {
 }
 
 // Constructor
-func NewStore() *Store {
-	return &Store{
+func NewMemoryStore() *MemoryStore {
+	return &MemoryStore{
 		accounts:     make(map[string]Account),
 		transactions: []Transaction{},
 		entries:      []Entry{},
@@ -26,7 +35,7 @@ func NewStore() *Store {
 }
 
 // Account operations
-func (s *Store) CreateAccount(name string, accType AccountType) (*Account, error) {
+func (s *MemoryStore) CreateAccount(name string, accType AccountType) (*Account, error) {
 	if err := ValidateAccount(name, accType); err != nil {
 		return nil, err
 	}
@@ -47,7 +56,7 @@ func (s *Store) CreateAccount(name string, accType AccountType) (*Account, error
 	return account, nil
 }
 
-func (s *Store) GetBalance(accountID string) (decimal.Decimal, error) {
+func (s *MemoryStore) GetBalance(accountID string) (decimal.Decimal, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -58,7 +67,7 @@ func (s *Store) GetBalance(accountID string) (decimal.Decimal, error) {
 	return account.Balance, nil
 }
 
-func (s *Store) CreateTransaction(entries []EntryRequest) (*Transaction, error) {
+func (s *MemoryStore) CreateTransaction(entries []EntryRequest) (*Transaction, error) {
 	if err := ValidateTransaction(entries); err != nil {
 		return nil, err
 	}
@@ -107,15 +116,4 @@ func (s *Store) CreateTransaction(entries []EntryRequest) (*Transaction, error) 
 
 	s.transactions = append(s.transactions, *transaction)
 	return transaction, nil
-}
-
-func (s *Store) GetAccount(accountID string) (*Account, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	account, exists := s.accounts[accountID]
-	if !exists {
-		return nil, fmt.Errorf("Account with ID %s not found", accountID)
-	}
-	return &account, nil
 }

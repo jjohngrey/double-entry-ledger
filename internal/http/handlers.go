@@ -13,7 +13,7 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	json.NewEncoder(w).Encode(ledger.ErrorResponse{Error: msg})
 }
 
-func CreateAccountHandler(store *ledger.Store) http.HandlerFunc {
+func CreateAccountHandler(store ledger.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req ledger.CreateAccountRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -33,7 +33,7 @@ func CreateAccountHandler(store *ledger.Store) http.HandlerFunc {
 	}
 }
 
-func GetBalanceHandler(store *ledger.Store) http.HandlerFunc {
+func GetBalanceHandler(store ledger.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accountID := r.URL.Query().Get("account_id")
 		if accountID == "" {
@@ -53,7 +53,7 @@ func GetBalanceHandler(store *ledger.Store) http.HandlerFunc {
 	}
 }
 
-func CreateTransactionHandler(store *ledger.Store) http.HandlerFunc {
+func CreateTransactionHandler(store ledger.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req ledger.CreateTransactionRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

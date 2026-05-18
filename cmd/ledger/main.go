@@ -12,7 +12,7 @@ import (
 
 func main() {
 	// initialize in-memory data stores
-	store := ledger.NewStore()
+	store := ledger.NewMemoryStore()
 
 	// initialize the router
 	r := chi.NewRouter()
