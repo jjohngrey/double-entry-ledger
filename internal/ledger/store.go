@@ -61,6 +61,10 @@ func (s *MemoryStore) GetBalance(accountID string) (decimal.Decimal, error) {
 	if !exists {
 		return decimal.Zero, fmt.Errorf("Account with ID %s not found", accountID)
 	}
+
+	if account.Type == LiabilityType || account.Type == EquityType || account.Type == RevenueType {
+		return account.Balance.Neg(), nil
+	}
 	return account.Balance, nil
 }
 
