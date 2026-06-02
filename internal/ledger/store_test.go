@@ -104,7 +104,7 @@ func TestGetBalance_SignFlipByAccountType(t *testing.T) {
 			t.Fatalf("Unexpected error creating other account: %v", err2)
 		}
 
-		_, err := s.CreateTransaction([]EntryRequest{
+		_, _, err := s.CreateTransaction("", []EntryRequest{
 			{AccountID: subject.ID, Debit: decimal.NewFromInt(tc.debit), Credit: decimal.NewFromInt(tc.credit)},
 			{AccountID: other.ID, Debit: decimal.NewFromInt(tc.credit), Credit: decimal.NewFromInt(tc.debit)},
 		})
@@ -139,7 +139,7 @@ func TestCreateTransaction_Balanced(t *testing.T) {
 		{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
 		{AccountID: acc2.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
 	}
-	_, err = s.CreateTransaction(entries)
+	_, _, err = s.CreateTransaction("", entries)
 	if err != nil {
 		t.Fatalf("Unexpected error creating transaction: %v", err)
 	}
@@ -180,7 +180,7 @@ func TestCreateTransaction_Unbalanced(t *testing.T) {
 		{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
 		{AccountID: acc2.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(50)},
 	}
-	_, err = s.CreateTransaction(entries)
+	_, _, err = s.CreateTransaction("", entries)
 	if err == nil {
 		t.Fatal("Expected error for unbalanced transaction, got nil")
 	}
@@ -245,7 +245,7 @@ func TestCreateTransaction_InvalidInput(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := s.CreateTransaction(tc.entries)
+		_, _, err := s.CreateTransaction("", tc.entries)
 		if err == nil {
 			t.Errorf("%s: expected error, got nil", tc.name)
 		}

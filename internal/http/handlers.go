@@ -61,14 +61,17 @@ func CreateTransactionHandler(store ledger.Store) http.HandlerFunc {
 			return
 		}
 
-		transaction, err := store.CreateTransaction(req.Entries)
+		 transaction, existed, err := store.CreateTransaction(req.IdempotencyKey, req.Entries)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
+		statusCode := http.StatusCreated
+		if existed {
+			statusCode = http.StatusOK
+		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(statusCode)
 		json.NewEncoder(w).Encode(transaction)
 	}
 }

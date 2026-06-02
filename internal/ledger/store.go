@@ -11,27 +11,29 @@ import (
 
 type Store interface {
 	CreateAccount(name string, accType AccountType) (*Account, error)
-	CreateTransaction(entries []EntryRequest) (*Transaction, error)
+	CreateTransaction(idempotencyKey string, entries []EntryRequest) (*Transaction, bool, error)
 	GetBalance(accountID string) (decimal.Decimal, error)
 }
 
 var _ Store = (*MemoryStore)(nil) // compile-time assertion that MemoryStore implements Store
 
 type MemoryStore struct {
-	mu           sync.RWMutex
-	accounts     map[string]Account // UUID -> Account
-	transactions []Transaction
+	mu              sync.RWMutex
+	accounts        map[string]Account
+	transactions    []Transaction
+	idempotencyKeys map[string]string // idempotencyKey -> transactionID
 }
 
-// Constructor
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		accounts:     make(map[string]Account),
-		transactions: []Transaction{},
+		accounts:        make(map[string]Account),
+		transactions:    []Transaction{},
+		idempotencyKeys: make(map[string]string),
 	}
 }
 
-// Account operations
+// Public methods
+
 func (s *MemoryStore) CreateAccount(name string, accType AccountType) (*Account, error) {
 	if err := ValidateAccount(name, accType); err != nil {
 		return nil, err
@@ -53,6 +55,32 @@ func (s *MemoryStore) CreateAccount(name string, accType AccountType) (*Account,
 	return account, nil
 }
 
+func (s *MemoryStore) CreateTransaction(idempotencyKey string, entries []EntryRequest) (*Transaction, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if idempotencyKey != "" {
+		if transactionID, exists := s.idempotencyKeys[idempotencyKey]; exists {
+			transaction, err := s.getTransactionByID(transactionID)
+			if err != nil {
+				return nil, false, fmt.Errorf("idempotency key references missing transaction")
+			}
+			return transaction, true, nil
+		}
+	}
+
+	transaction, err := s.createTransaction(entries)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if idempotencyKey != "" {
+		s.idempotencyKeys[idempotencyKey] = transaction.ID
+	}
+
+	return transaction, false, nil
+}
+
 func (s *MemoryStore) GetBalance(accountID string) (decimal.Decimal, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -68,20 +96,17 @@ func (s *MemoryStore) GetBalance(accountID string) (decimal.Decimal, error) {
 	return account.Balance, nil
 }
 
-func (s *MemoryStore) CreateTransaction(entries []EntryRequest) (*Transaction, error) {
+// Private methods
+func (s *MemoryStore) createTransaction(entries []EntryRequest) (*Transaction, error) {
 	if err := ValidateTransaction(entries); err != nil {
 		return nil, err
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	transactionID := uuid.New().String()
 	sec := time.Now()
 
 	var transactionEntries []Entry
 
-	// validate accounts exist before changes for atomicity of transaction
 	for _, entry := range entries {
 		_, exists := s.accounts[entry.AccountID]
 		if !exists {
@@ -92,7 +117,6 @@ func (s *MemoryStore) CreateTransaction(entries []EntryRequest) (*Transaction, e
 	for _, entry := range entries {
 		account := s.accounts[entry.AccountID]
 
-		// create entries
 		entryID := uuid.New().String()
 		newEntry := &Entry{
 			ID:            entryID,
@@ -104,7 +128,6 @@ func (s *MemoryStore) CreateTransaction(entries []EntryRequest) (*Transaction, e
 
 		transactionEntries = append(transactionEntries, *newEntry)
 
-		// update account balance
 		account.Balance = account.Balance.Add(entry.Debit).Sub(entry.Credit)
 		s.accounts[account.ID] = account
 	}
@@ -117,4 +140,13 @@ func (s *MemoryStore) CreateTransaction(entries []EntryRequest) (*Transaction, e
 
 	s.transactions = append(s.transactions, *transaction)
 	return transaction, nil
+}
+
+func (s *MemoryStore) getTransactionByID(transactionID string) (*Transaction, error) {
+	for _, transaction := range s.transactions {
+		if transaction.ID == transactionID {
+			return &transaction, nil
+		}
+	}
+	return nil, fmt.Errorf("Transaction with ID %s not found", transactionID)
 }
