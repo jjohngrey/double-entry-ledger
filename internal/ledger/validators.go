@@ -25,9 +25,6 @@ func ValidateTransaction(entries []EntryRequest) error {
 
 	var totalDebit, totalCredit decimal.Decimal
 	for _, entry := range entries {
-		if entry.AccountID == "" {
-			return fmt.Errorf("Entry account ID cannot be empty")
-		}
 		if entry.Debit.IsNegative() || entry.Credit.IsNegative() {
 			return fmt.Errorf("Entry amounts cannot be negative")
 		}

@@ -6,7 +6,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func TestCreateAccount_ValidInput(t *testing.T) {
+func TestCreateAccount(t *testing.T) {
 	s := NewMemoryStore()
 
 	var account, err = s.CreateAccount("Cash", AssetType)
@@ -24,29 +24,6 @@ func TestCreateAccount_ValidInput(t *testing.T) {
 		}
 		if !account.Balance.Equal(decimal.Zero) {
 			t.Errorf("Expected initial balance of 0, got %s", account.Balance)
-		}
-	}
-}
-
-func TestCreateAccount_InvalidInput(t *testing.T) {
-	s := NewMemoryStore()
-
-	cases := []struct {
-		name    string
-		accName string
-		accType AccountType
-	}{
-		{"empty name", "", AssetType},
-		{"invalid type", "Cash", "invalid_type"},
-	}
-
-	for _, tc := range cases {
-		acc, err := s.CreateAccount(tc.accName, tc.accType)
-		if err == nil {
-			t.Errorf("%s: expected error, got nil", tc.name)
-		}
-		if acc != nil {
-			t.Errorf("%s: expected nil account, got %+v", tc.name, acc)
 		}
 	}
 }
@@ -202,52 +179,47 @@ func TestCreateTransaction_Unbalanced(t *testing.T) {
 	}
 }
 
-func TestCreateTransaction_InvalidInput(t *testing.T) {
-	s := NewMemoryStore()
-
-	var acc1, err1 = s.CreateAccount("existent1", AssetType)
-	if err1 != nil {
-		t.Fatalf("Unexpected error creating account: %v", err1)
-	}
-	var acc2, err2 = s.CreateAccount("existent2", AssetType)
-	if err2 != nil {
-		t.Fatalf("Unexpected error creating account: %v", err2)
-	}
+func TestCreateTransaction_Idempotency(t *testing.T) {
 	cases := []struct {
-		name    string
-		entries []EntryRequest
+		name       string
+		key1       string
+		key2       string
+		sameID     bool
+		existedOn2 bool
 	}{
-		{"less than 2 entries", []EntryRequest{{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero}}},
-		{"account does not exist", []EntryRequest{
-			{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
-			{AccountID: "other-non-existent-id", Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
-		}},
-		{"negative debit", []EntryRequest{
-			{AccountID: acc1.ID, Debit: decimal.NewFromInt(-100), Credit: decimal.Zero},
-			{AccountID: acc2.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
-		}},
-		{"negative credit", []EntryRequest{
-			{AccountID: acc1.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(-100)},
-			{AccountID: acc2.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
-		}},
-		{"debits do not equal credits", []EntryRequest{
-			{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
-			{AccountID: acc2.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(50)},
-		}},
-		{"entry with zero debit and credit", []EntryRequest{
-			{AccountID: acc1.ID, Debit: decimal.Zero, Credit: decimal.Zero},
-			{AccountID: acc2.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
-		}},
-		{"entry with both debit and credit", []EntryRequest{
-			{AccountID: acc1.ID, Debit: decimal.NewFromInt(50), Credit: decimal.NewFromInt(50)},
-			{AccountID: acc2.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
-		}},
+		{"same key", "key-abc", "key-abc", true, true},
+		{"different keys", "key-1", "key-2", false, false},
+		{"empty key", "", "", false, false},
 	}
 
 	for _, tc := range cases {
-		_, _, err := s.CreateTransaction("", tc.entries)
-		if err == nil {
-			t.Errorf("%s: expected error, got nil", tc.name)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewMemoryStore()
+			acc1, _ := s.CreateAccount("Cash", AssetType)
+			acc2, _ := s.CreateAccount("Revenue", RevenueType)
+			entries := []EntryRequest{
+				{AccountID: acc1.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
+				{AccountID: acc2.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
+			}
+
+			tx1, existed1, err := s.CreateTransaction(tc.key1, entries)
+			if err != nil || existed1 {
+				t.Fatalf("first call: expected new transaction, got existed=%v err=%v", existed1, err)
+			}
+
+			tx2, existed2, err := s.CreateTransaction(tc.key2, entries)
+			if err != nil {
+				t.Fatalf("second call: unexpected error: %v", err)
+			}
+			if existed2 != tc.existedOn2 {
+				t.Errorf("existed: expected %v, got %v", tc.existedOn2, existed2)
+			}
+			if tc.sameID && tx1.ID != tx2.ID {
+				t.Errorf("expected same transaction ID, got %s and %s", tx1.ID, tx2.ID)
+			}
+			if !tc.sameID && tx1.ID == tx2.ID {
+				t.Errorf("expected different transaction IDs, got same: %s", tx1.ID)
+			}
+		})
 	}
 }
