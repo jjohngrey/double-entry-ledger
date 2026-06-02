@@ -48,8 +48,7 @@ func GetBalanceHandler(store ledger.Store) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{"balance": balance})
+		json.NewEncoder(w).Encode(ledger.BalanceResponse{Balance: balance})
 	}
 }
 

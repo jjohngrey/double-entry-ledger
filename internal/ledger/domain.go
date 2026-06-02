@@ -19,13 +19,16 @@ type EntryRequest struct {
 }
 
 type CreateTransactionRequest struct {
-	Entries []EntryRequest `json:"entries"`
-	IdempotencyKey string          `json:"idempotency_key"`
-
+	Entries        []EntryRequest `json:"entries"`
+	IdempotencyKey string         `json:"idempotency_key"`
 }
 
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type BalanceResponse struct {
+	Balance decimal.Decimal `json:"balance"`
 }
 
 // ENUMERATIONS
@@ -56,8 +59,8 @@ type Entry struct {
 }
 
 type Transaction struct {
-	ID             string    `json:"id"`
-	Entries        []Entry   `json:"entries"`
-	Timestamp      time.Time `json:"timestamp"`
+	ID        string    `json:"id"`
+	Entries   []Entry   `json:"entries"`
+	Timestamp time.Time `json:"timestamp"`
 	// Invariant: sum(Debit across all entries) == sum(Credit across all entries)
 }
