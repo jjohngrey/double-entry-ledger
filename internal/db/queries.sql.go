@@ -28,7 +28,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (u
 }
 
 const createEntry = `-- name: CreateEntry :one
-INSERT INTO entries (account_id, transaction_id, credit, debit) VALUES ($1, $2, $3, $4) returning id
+INSERT INTO entries (account_id, transaction_id, credit, debit) VALUES ($1, $2, $3, $4) RETURNING id
 `
 
 type CreateEntryParams struct {
@@ -38,7 +38,6 @@ type CreateEntryParams struct {
 	Debit         string    `json:"debit"`
 }
 
-// Ensure to call UpdateAccountBalance after this to maintain consistency
 func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createEntry,
 		arg.AccountID,
@@ -49,6 +48,20 @@ func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (uuid.
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const createIdempotencyKey = `-- name: CreateIdempotencyKey :exec
+INSERT INTO idempotency_keys (key, transaction_id) VALUES ($1, $2)
+`
+
+type CreateIdempotencyKeyParams struct {
+	Key           string    `json:"key"`
+	TransactionID uuid.UUID `json:"transaction_id"`
+}
+
+func (q *Queries) CreateIdempotencyKey(ctx context.Context, arg CreateIdempotencyKeyParams) error {
+	_, err := q.db.ExecContext(ctx, createIdempotencyKey, arg.Key, arg.TransactionID)
+	return err
 }
 
 const createTransaction = `-- name: CreateTransaction :one
@@ -63,19 +76,66 @@ func (q *Queries) CreateTransaction(ctx context.Context) (uuid.UUID, error) {
 }
 
 const getAccountBalance = `-- name: GetAccountBalance :one
-SELECT CASE
-    WHEN type IN ('asset', 'expense') THEN accounts.balance
-    ELSE accounts.balance * -1
-END AS balance
+SELECT CAST(CASE
+    WHEN type IN ('asset', 'expense') THEN balance
+    ELSE balance * -1
+END AS NUMERIC(20,2)) AS balance
 FROM accounts
 WHERE id = $1
 `
 
-func (q *Queries) GetAccountBalance(ctx context.Context, id uuid.UUID) (interface{}, error) {
+func (q *Queries) GetAccountBalance(ctx context.Context, id uuid.UUID) (string, error) {
 	row := q.db.QueryRowContext(ctx, getAccountBalance, id)
-	var balance interface{}
+	var balance string
 	err := row.Scan(&balance)
 	return balance, err
+}
+
+const getEntriesByTransactionID = `-- name: GetEntriesByTransactionID :many
+SELECT id, account_id, transaction_id, credit, debit, created_at
+FROM entries
+WHERE transaction_id = $1
+`
+
+func (q *Queries) GetEntriesByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]Entry, error) {
+	rows, err := q.db.QueryContext(ctx, getEntriesByTransactionID, transactionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Entry
+	for rows.Next() {
+		var i Entry
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.TransactionID,
+			&i.Credit,
+			&i.Debit,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getIdempotencyKey = `-- name: GetIdempotencyKey :one
+SELECT transaction_id FROM idempotency_keys WHERE key = $1
+`
+
+func (q *Queries) GetIdempotencyKey(ctx context.Context, key string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getIdempotencyKey, key)
+	var transaction_id uuid.UUID
+	err := row.Scan(&transaction_id)
+	return transaction_id, err
 }
 
 const updateAccountBalance = `-- name: UpdateAccountBalance :one
