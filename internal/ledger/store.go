@@ -128,7 +128,7 @@ func (s *MemoryStore) createTransaction(entries []EntryRequest) (*Transaction, e
 
 		transactionEntries = append(transactionEntries, *newEntry)
 
-		account.Balance = account.Balance.Add(entry.Debit).Sub(entry.Credit)
+		updateAccountBalance(&account, entry.Credit, entry.Debit)
 		s.accounts[account.ID] = account
 	}
 
@@ -149,4 +149,8 @@ func (s *MemoryStore) getTransactionByID(transactionID string) (*Transaction, er
 		}
 	}
 	return nil, fmt.Errorf("Transaction with ID %s not found", transactionID)
+}
+
+func updateAccountBalance(account *Account, credit decimal.Decimal, debit decimal.Decimal) {
+	account.Balance = account.Balance.Add(debit).Sub(credit)
 }
