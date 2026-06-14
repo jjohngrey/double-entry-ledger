@@ -7,6 +7,12 @@ INSERT INTO transactions DEFAULT VALUES RETURNING id;
 -- name: CreateEntry :one
 INSERT INTO entries (account_id, transaction_id, credit, debit) VALUES ($1, $2, $3, $4) RETURNING id;
 
+-- name: GetAccountEntries :many
+SELECT id, account_id, transaction_id, credit, debit, created_at
+FROM entries
+WHERE account_id = $1 AND created_at >= $2 AND created_at <= $3
+ORDER BY created_at ASC;
+
 -- name: GetAccountBalance :one
 SELECT CAST(CASE
     WHEN type IN ('asset', 'expense') THEN balance

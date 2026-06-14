@@ -46,6 +46,7 @@ func main() {
 	})
 
 	r.Post("/accounts", httphandlers.CreateAccountHandler(store))
+	r.Get("/accounts/{account_id}/transactions", httphandlers.GetAccountEntriesHandler(store))
 	r.Get("/balance", httphandlers.GetBalanceHandler(store))
 	r.Post("/transactions", httphandlers.CreateTransactionHandler(store))
 

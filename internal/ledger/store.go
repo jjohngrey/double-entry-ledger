@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -13,6 +14,7 @@ type Store interface {
 	CreateAccount(name string, accType AccountType) (*Account, error)
 	CreateTransaction(idempotencyKey string, entries []EntryRequest) (*Transaction, bool, error)
 	GetBalance(accountID string) (decimal.Decimal, error)
+	GetAccountEntries(accountID string, params GetAccountEntriesParams) (GetAccountEntriesResponse, error)
 }
 
 var _ Store = (*MemoryStore)(nil) // compile-time assertion that MemoryStore implements Store
@@ -79,6 +81,38 @@ func (s *MemoryStore) CreateTransaction(idempotencyKey string, entries []EntryRe
 	}
 
 	return transaction, false, nil
+}
+
+func (s *MemoryStore) GetAccountEntries(accountID string, params GetAccountEntriesParams) (GetAccountEntriesResponse, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	sortedTransactions := make([]Transaction, len(s.transactions))
+	copy(sortedTransactions, s.transactions)
+	sort.Slice(sortedTransactions, func(i, j int) bool {
+		return sortedTransactions[i].Timestamp.Before(sortedTransactions[j].Timestamp)
+	})
+
+	var entries []Entry
+	var runningBalance = decimal.Zero
+	for _, transaction := range sortedTransactions {
+		if transaction.Timestamp.Before(params.From) || transaction.Timestamp.After(params.To) {
+			continue
+		}
+		for _, entry := range transaction.Entries {
+			if entry.AccountID == accountID {
+				entries = append(entries, entry)
+				runningBalance = runningBalance.Add(entry.Debit).Sub(entry.Credit)
+			}
+		}
+	}
+
+	res := GetAccountEntriesResponse{
+		Entries:        entries,
+		RunningBalance: runningBalance,
+	}
+
+	return res, nil
 }
 
 func (s *MemoryStore) GetBalance(accountID string) (decimal.Decimal, error) {

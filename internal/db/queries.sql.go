@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -89,6 +90,49 @@ func (q *Queries) GetAccountBalance(ctx context.Context, id uuid.UUID) (string, 
 	var balance string
 	err := row.Scan(&balance)
 	return balance, err
+}
+
+const getAccountEntries = `-- name: GetAccountEntries :many
+SELECT id, account_id, transaction_id, credit, debit, created_at
+FROM entries
+WHERE account_id = $1 AND created_at >= $2 AND created_at <= $3
+ORDER BY created_at ASC
+`
+
+type GetAccountEntriesParams struct {
+	AccountID   uuid.UUID `json:"account_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	CreatedAt_2 time.Time `json:"created_at_2"`
+}
+
+func (q *Queries) GetAccountEntries(ctx context.Context, arg GetAccountEntriesParams) ([]Entry, error) {
+	rows, err := q.db.QueryContext(ctx, getAccountEntries, arg.AccountID, arg.CreatedAt, arg.CreatedAt_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Entry
+	for rows.Next() {
+		var i Entry
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.TransactionID,
+			&i.Credit,
+			&i.Debit,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getEntriesByTransactionID = `-- name: GetEntriesByTransactionID :many

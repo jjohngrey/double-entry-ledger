@@ -23,13 +23,26 @@ type CreateTransactionRequest struct {
 	IdempotencyKey string         `json:"idempotency_key"`
 }
 
+// OPTIONAL PARAMETER MODELS
+type GetAccountEntriesParams struct {
+	From time.Time `json:"from"`
+	To   time.Time `json:"to"`
+}
+
+// RESPONSE MODELS
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-type BalanceResponse struct {
+type GetAccountEntriesResponse struct {
+	Entries        []Entry         `json:"entries"`
+	RunningBalance decimal.Decimal `json:"running_balance"`
+}
+
+type GetBalanceHandlerResponse struct {
 	Balance decimal.Decimal `json:"balance"`
 }
+
 
 // ENUMERATIONS
 type AccountType string

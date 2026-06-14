@@ -153,6 +153,51 @@ func (s *PostgresStore) CreateTransaction(idempotencyKey string, entries []Entry
 	}, false, nil
 }
 
+func (s *PostgresStore) GetAccountEntries(accountID string, params GetAccountEntriesParams) (GetAccountEntriesResponse, error) {
+	id, err := uuid.Parse(accountID)
+	if err != nil {
+		return GetAccountEntriesResponse{}, fmt.Errorf("invalid account ID: %w", err)
+	}
+
+	ctx := context.Background()
+	q := db.New(s.db)
+
+	dbEntries, err := q.GetAccountEntries(ctx, db.GetAccountEntriesParams{
+		AccountID:   id,
+		CreatedAt:   params.From,
+		CreatedAt_2: params.To,
+	})
+	if err != nil {
+		return GetAccountEntriesResponse{}, fmt.Errorf("get account entries: %w", err)
+	}
+
+	entries := make([]Entry, len(dbEntries))
+	runningBalance := decimal.Zero
+	for i, e := range dbEntries {
+		credit, err := decimal.NewFromString(e.Credit)
+		if err != nil {
+			return GetAccountEntriesResponse{}, fmt.Errorf("parse credit: %w", err)
+		}
+		debit, err := decimal.NewFromString(e.Debit)
+		if err != nil {
+			return GetAccountEntriesResponse{}, fmt.Errorf("parse debit: %w", err)
+		}
+		entries[i] = Entry{
+			ID:            e.ID.String(),
+			AccountID:     e.AccountID.String(),
+			TransactionID: e.TransactionID.String(),
+			Credit:        credit,
+			Debit:         debit,
+		}
+		runningBalance = runningBalance.Add(debit).Sub(credit)
+	}
+
+	return GetAccountEntriesResponse{
+		Entries:        entries,
+		RunningBalance: runningBalance,
+	}, nil
+}
+
 func (s *PostgresStore) buildTransaction(q *db.Queries, ctx context.Context, txID uuid.UUID) (*Transaction, error) {
 	dbEntries, err := q.GetEntriesByTransactionID(ctx, txID)
 	if err != nil {

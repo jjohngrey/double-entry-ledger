@@ -3,7 +3,9 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jjohngrey/double-entry-ledger/internal/ledger"
 )
 
@@ -33,6 +35,45 @@ func CreateAccountHandler(store ledger.Store) http.HandlerFunc {
 	}
 }
 
+func GetAccountEntriesHandler(store ledger.Store) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		accountID := chi.URLParam(r, "account_id")
+		if accountID == "" {
+			writeError(w, http.StatusBadRequest, "account_id path parameter is required")
+			return
+		}
+
+		params := ledger.GetAccountEntriesParams{
+			To: time.Now(),
+		}
+		if fromStr := r.URL.Query().Get("from"); fromStr != "" {
+			from, err := time.Parse(time.RFC3339, fromStr)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid 'from' timestamp, expected RFC3339")
+				return
+			}
+			params.From = from
+		}
+		if toStr := r.URL.Query().Get("to"); toStr != "" {
+			to, err := time.Parse(time.RFC3339, toStr)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid 'to' timestamp, expected RFC3339")
+				return
+			}
+			params.To = to
+		}
+
+		res, err := store.GetAccountEntries(accountID, params)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(res)
+	}
+}
+
 func GetBalanceHandler(store ledger.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		accountID := r.URL.Query().Get("account_id")
@@ -48,7 +89,7 @@ func GetBalanceHandler(store ledger.Store) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(ledger.BalanceResponse{Balance: balance})
+		json.NewEncoder(w).Encode(ledger.GetBalanceHandlerResponse{Balance: balance})
 	}
 }
 
@@ -60,7 +101,7 @@ func CreateTransactionHandler(store ledger.Store) http.HandlerFunc {
 			return
 		}
 
-		 transaction, existed, err := store.CreateTransaction(req.IdempotencyKey, req.Entries)
+		transaction, existed, err := store.CreateTransaction(req.IdempotencyKey, req.Entries)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
