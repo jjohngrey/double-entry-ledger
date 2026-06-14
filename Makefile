@@ -1,5 +1,8 @@
 .PHONY: run test migrate
 
+build:
+	go build ./...
+
 run:
 	go run ./cmd/ledger
 
