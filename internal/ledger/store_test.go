@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"testing"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -176,6 +177,94 @@ func TestCreateTransaction_Unbalanced(t *testing.T) {
 	}
 	if !balance2.Equal(decimal.Zero) {
 		t.Errorf("Expected balance of 0 for account 2, got %s", balance2)
+	}
+}
+
+func TestGetAccountEntries(t *testing.T) {
+	s := NewMemoryStore()
+	
+	// Create account and transactions
+	acc, _ := s.CreateAccount("Cash", AssetType)
+	other, _ := s.CreateAccount("Revenue", RevenueType)
+	s.CreateTransaction("", []EntryRequest{
+		{AccountID: acc.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
+		{AccountID: other.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
+	})
+	s.CreateTransaction("", []EntryRequest{
+		{AccountID: acc.ID, Debit: decimal.NewFromInt(50), Credit: decimal.Zero},
+		{AccountID: other.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(50)},
+	})
+
+	response, err := s.GetAccountEntries(acc.ID, GetAccountEntriesParams{})
+	if err != nil {
+		t.Fatalf("Unexpected error getting account entries: %v", err)
+	}
+	if len(response.Entries) != 2 {
+		t.Errorf("Expected 2 entries for account, got %d", len(response.Entries))
+	}
+	expectedBalance := decimal.NewFromInt(150)
+	if !response.RunningBalance.Equal(expectedBalance) {
+		t.Errorf("Expected running balance of %s, got %s", expectedBalance, response.RunningBalance)
+	}
+}
+
+func TestGetAccountEntries_FromAndTo(t *testing.T) {
+	s := NewMemoryStore()
+	
+	// Create account and transactions
+	acc, _ := s.CreateAccount("Cash", AssetType)
+	other, _ := s.CreateAccount("Revenue", RevenueType)
+	s.CreateTransaction("", []EntryRequest{
+		{AccountID: acc.ID, Debit: decimal.NewFromInt(100), Credit: decimal.Zero},
+		{AccountID: other.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(100)},
+	})
+	s.CreateTransaction("", []EntryRequest{
+		{AccountID: acc.ID, Debit: decimal.NewFromInt(50), Credit: decimal.Zero},
+		{AccountID: other.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(50)},
+	})
+
+	now := time.Now()
+	response, err := s.GetAccountEntries(acc.ID, GetAccountEntriesParams{
+		From: now.Add(-time.Hour),
+		To:   now.Add(time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("Unexpected error getting account entries with from/to: %v", err)
+	}
+	if len(response.Entries) != 2 {
+		t.Errorf("Expected 2 entries for account with from/to filter, got %d", len(response.Entries))
+	}
+	expectedBalance := decimal.NewFromInt(150)
+	if !response.RunningBalance.Equal(expectedBalance) {
+		t.Errorf("Expected running balance of %s with from/to filter, got %s", expectedBalance, response.RunningBalance)
+	}
+
+	response2, err2 := s.GetAccountEntries(acc.ID, GetAccountEntriesParams{
+		From: now.Add(-time.Hour),
+	})
+	if err2 != nil {
+		t.Fatalf("Unexpected error getting account entries with from/to: %v", err2)
+	}
+	if len(response2.Entries) != 2 {
+		t.Errorf("Expected 2 entries for account with from/to filter, got %d", len(response2.Entries))
+	}
+	expectedBalance2 := decimal.NewFromInt(150)
+	if !response2.RunningBalance.Equal(expectedBalance2) {
+		t.Errorf("Expected running balance of %s with from/to filter, got %s", expectedBalance2, response2.RunningBalance)
+	}
+
+	response3, err3 := s.GetAccountEntries(acc.ID, GetAccountEntriesParams{
+		To:   now.Add(time.Hour),
+	})
+	if err3 != nil {
+		t.Fatalf("Unexpected error getting account entries with from/to: %v", err3)
+	}
+	if len(response3.Entries) != 2 {
+		t.Errorf("Expected 2 entries for account with from/to filter, got %d", len(response3.Entries))
+	}
+	expectedBalance3 := decimal.NewFromInt(150)
+	if !response3.RunningBalance.Equal(expectedBalance3) {
+		t.Errorf("Expected running balance of %s with from/to filter, got %s", expectedBalance3, response3.RunningBalance)
 	}
 }
 

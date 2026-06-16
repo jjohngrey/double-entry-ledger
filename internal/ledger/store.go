@@ -92,11 +92,11 @@ func (s *MemoryStore) GetAccountEntries(accountID string, params GetAccountEntri
 	sort.Slice(sortedTransactions, func(i, j int) bool {
 		return sortedTransactions[i].Timestamp.Before(sortedTransactions[j].Timestamp)
 	})
-
 	var entries []Entry
 	var runningBalance = decimal.Zero
 	for _, transaction := range sortedTransactions {
-		if transaction.Timestamp.Before(params.From) || transaction.Timestamp.After(params.To) {
+		if (!params.From.IsZero() && transaction.Timestamp.Before(params.From)) ||
+			(!params.To.IsZero() && transaction.Timestamp.After(params.To)) {
 			continue
 		}
 		for _, entry := range transaction.Entries {
