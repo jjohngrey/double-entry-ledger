@@ -13,11 +13,16 @@ import (
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db                *sql.DB
+	txOptions         *sql.TxOptions
+	afterBalanceCheck func(uuid.UUID)
 }
 
 func NewPostgresStore(sqlDB *sql.DB) *PostgresStore {
-	return &PostgresStore{db: sqlDB}
+	return &PostgresStore{
+		db:        sqlDB,
+		txOptions: &sql.TxOptions{Isolation: sql.LevelSerializable},
+	}
 }
 
 var _ Store = (*PostgresStore)(nil)
@@ -72,7 +77,7 @@ func (s *PostgresStore) CreateTransaction(idempotencyKey string, entries []Entry
 	}
 
 	ctx := context.Background()
-	tx, err := s.db.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, s.txOptions)
 	if err != nil {
 		return nil, false, fmt.Errorf("begin transaction: %w", err)
 	}
@@ -93,32 +98,35 @@ func (s *PostgresStore) CreateTransaction(idempotencyKey string, entries []Entry
 		}
 	}
 
+	preparedEntries, err := preparePostgresEntries(entries)
+	if err != nil {
+		return nil, false, err
+	}
+	if err := s.ensureSufficientBalances(ctx, tx, preparedEntries); err != nil {
+		return nil, false, err
+	}
+
 	txID, err := q.CreateTransaction(ctx)
 	if err != nil {
 		return nil, false, fmt.Errorf("create transaction row: %w", err)
 	}
 
 	var ledgerEntries []Entry
-	for _, e := range entries {
-		accountID, err := uuid.Parse(e.AccountID)
-		if err != nil {
-			return nil, false, fmt.Errorf("invalid account ID %s: %w", e.AccountID, err)
-		}
-
+	for _, e := range preparedEntries {
 		entryID, err := q.CreateEntry(ctx, db.CreateEntryParams{
-			AccountID:     accountID,
+			AccountID:     e.accountID,
 			TransactionID: txID,
-			Credit:        e.Credit.String(),
-			Debit:         e.Debit.String(),
+			Credit:        e.entry.Credit.String(),
+			Debit:         e.entry.Debit.String(),
 		})
 		if err != nil {
 			return nil, false, fmt.Errorf("create entry: %w", err)
 		}
 
 		_, err = q.UpdateAccountBalance(ctx, db.UpdateAccountBalanceParams{
-			ID:        accountID,
-			Balance:   e.Debit.String(),
-			Balance_2: e.Credit.String(),
+			ID:        e.accountID,
+			Balance:   e.entry.Debit.String(),
+			Balance_2: e.entry.Credit.String(),
 		})
 		if err != nil {
 			return nil, false, fmt.Errorf("update account balance: %w", err)
@@ -126,10 +134,10 @@ func (s *PostgresStore) CreateTransaction(idempotencyKey string, entries []Entry
 
 		ledgerEntries = append(ledgerEntries, Entry{
 			ID:            entryID.String(),
-			AccountID:     e.AccountID,
+			AccountID:     e.entry.AccountID,
 			TransactionID: txID.String(),
-			Credit:        e.Credit,
-			Debit:         e.Debit,
+			Credit:        e.entry.Credit,
+			Debit:         e.entry.Debit,
 		})
 	}
 
@@ -196,6 +204,90 @@ func (s *PostgresStore) GetAccountEntries(accountID string, params GetAccountEnt
 		Entries:        entries,
 		RunningBalance: runningBalance,
 	}, nil
+}
+
+func newPostgresStoreWithTxOptions(sqlDB *sql.DB, txOptions *sql.TxOptions) *PostgresStore {
+	return &PostgresStore{db: sqlDB, txOptions: txOptions}
+}
+
+type postgresEntry struct {
+	accountID uuid.UUID
+	entry     EntryRequest
+}
+
+func preparePostgresEntries(entries []EntryRequest) ([]postgresEntry, error) {
+	prepared := make([]postgresEntry, len(entries))
+	for i, entry := range entries {
+		accountID, err := uuid.Parse(entry.AccountID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid account ID %s: %w", entry.AccountID, err)
+		}
+		prepared[i] = postgresEntry{
+			accountID: accountID,
+			entry:     entry,
+		}
+	}
+	return prepared, nil
+}
+
+func (s *PostgresStore) ensureSufficientBalances(ctx context.Context, tx *sql.Tx, entries []postgresEntry) error {
+	changes := make(map[uuid.UUID]EntryRequest)
+	for _, e := range entries {
+		change := changes[e.accountID]
+		change.AccountID = e.entry.AccountID
+		change.Credit = change.Credit.Add(e.entry.Credit)
+		change.Debit = change.Debit.Add(e.entry.Debit)
+		changes[e.accountID] = change
+	}
+
+	for accountID, change := range changes {
+		if err := ensureSufficientBalance(ctx, tx, accountID, change); err != nil {
+			return err
+		}
+		if s.afterBalanceCheck != nil {
+			s.afterBalanceCheck(accountID)
+		}
+	}
+
+	return nil
+}
+
+func ensureSufficientBalance(ctx context.Context, tx *sql.Tx, accountID uuid.UUID, entry EntryRequest) error {
+	var accountTypeStr string
+	var balanceStr string
+	err := tx.QueryRowContext(ctx, `
+		SELECT type, CAST(balance AS NUMERIC(20,2))
+		FROM accounts
+		WHERE id = $1
+	`, accountID).Scan(&accountTypeStr, &balanceStr)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("account not found: %s", accountID)
+		}
+		return fmt.Errorf("get account balance for posting: %w", err)
+	}
+
+	storedBalance, err := decimal.NewFromString(balanceStr)
+	if err != nil {
+		return fmt.Errorf("parse account balance: %w", err)
+	}
+
+	accountType := AccountType(accountTypeStr)
+	newDisplayBalance := displayedBalanceAfter(accountType, storedBalance, entry)
+	if newDisplayBalance.IsNegative() {
+		return fmt.Errorf("insufficient funds for account %s", accountID)
+	}
+
+	return nil
+}
+
+func displayedBalanceAfter(accountType AccountType, storedBalance decimal.Decimal, entry EntryRequest) decimal.Decimal {
+	switch accountType {
+	case AssetType, ExpenseType:
+		return storedBalance.Add(entry.Debit).Sub(entry.Credit)
+	default:
+		return storedBalance.Neg().Add(entry.Credit).Sub(entry.Debit)
+	}
 }
 
 func (s *PostgresStore) buildTransaction(q *db.Queries, ctx context.Context, txID uuid.UUID) (*Transaction, error) {
