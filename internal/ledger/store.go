@@ -23,14 +23,19 @@ type MemoryStore struct {
 	mu              sync.RWMutex
 	accounts        map[string]Account
 	transactions    []Transaction
-	idempotencyKeys map[string]string // idempotencyKey -> transactionID
+	idempotencyKeys map[string]memoryIdempotencyKey
+}
+
+type memoryIdempotencyKey struct {
+	transactionID string
+	checksum      string
 }
 
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		accounts:        make(map[string]Account),
 		transactions:    []Transaction{},
-		idempotencyKeys: make(map[string]string),
+		idempotencyKeys: make(map[string]memoryIdempotencyKey),
 	}
 }
 
@@ -61,9 +66,13 @@ func (s *MemoryStore) CreateTransaction(idempotencyKey string, entries []EntryRe
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	checksum := TransactionRequestChecksum("", entries)
 	if idempotencyKey != "" {
-		if transactionID, exists := s.idempotencyKeys[idempotencyKey]; exists {
-			transaction, err := s.getTransactionByID(transactionID)
+		if existingKey, exists := s.idempotencyKeys[idempotencyKey]; exists {
+			if existingKey.checksum != checksum {
+				return nil, false, ErrIdempotencyKeyConflict
+			}
+			transaction, err := s.getTransactionByID(existingKey.transactionID)
 			if err != nil {
 				return nil, false, fmt.Errorf("idempotency key references missing transaction")
 			}
@@ -77,7 +86,7 @@ func (s *MemoryStore) CreateTransaction(idempotencyKey string, entries []EntryRe
 	}
 
 	if idempotencyKey != "" {
-		s.idempotencyKeys[idempotencyKey] = transaction.ID
+		s.idempotencyKeys[idempotencyKey] = memoryIdempotencyKey{transactionID: transaction.ID, checksum: checksum}
 	}
 
 	return transaction, false, nil

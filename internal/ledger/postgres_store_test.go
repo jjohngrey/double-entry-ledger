@@ -2,10 +2,12 @@ package ledger
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -14,9 +16,62 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/shopspring/decimal"
 )
+
+func TestPostgresStore_CreateTransaction_RetriesSerializationFailures(t *testing.T) {
+	var calls int
+	store := &PostgresStore{
+		sleep: func(time.Duration) {},
+		transactionAttempt: func(string, []EntryRequest) (*Transaction, bool, error) {
+			calls++
+			if calls <= 2 {
+				return nil, false, fmt.Errorf("commit: %w", &pgconn.PgError{Code: "40001", Message: "could not serialize access"})
+			}
+			return &Transaction{ID: "posted"}, false, nil
+		},
+	}
+
+	transaction, existed, err := store.CreateTransaction("", validTransactionEntries())
+	if err != nil {
+		t.Fatalf("create transaction: %v", err)
+	}
+	if existed || transaction.ID != "posted" || calls != 3 {
+		t.Fatalf("expected third attempt to post, got transaction=%#v existed=%t calls=%d", transaction, existed, calls)
+	}
+	if metrics := store.RetryMetrics(); metrics.Attempts != 2 || metrics.Exhausted != 0 {
+		t.Fatalf("unexpected retry metrics: %#v", metrics)
+	}
+}
+
+func TestPostgresStore_CreateTransaction_SerializationRetryExhaustionIsControlled(t *testing.T) {
+	store := &PostgresStore{
+		sleep: func(time.Duration) {},
+		transactionAttempt: func(string, []EntryRequest) (*Transaction, bool, error) {
+			return nil, false, fmt.Errorf("update account balance: %w", &pgconn.PgError{Code: "40001", Message: "raw postgres serialization detail"})
+		},
+	}
+
+	_, _, err := store.CreateTransaction("", validTransactionEntries())
+	if !errors.Is(err, ErrTransactionRetryExhausted) {
+		t.Fatalf("expected controlled exhaustion error, got %v", err)
+	}
+	if strings.Contains(err.Error(), "raw postgres") {
+		t.Fatalf("controlled error exposed PostgreSQL text: %q", err)
+	}
+	if metrics := store.RetryMetrics(); metrics.Attempts != maxSerializationRetries || metrics.Exhausted != 1 {
+		t.Fatalf("unexpected retry metrics: %#v", metrics)
+	}
+}
+
+func validTransactionEntries() []EntryRequest {
+	return []EntryRequest{
+		{AccountID: uuid.NewString(), Debit: decimal.NewFromInt(1)},
+		{AccountID: uuid.NewString(), Credit: decimal.NewFromInt(1)},
+	}
+}
 
 func TestPostgresStore_CreateTransaction_ReadCommittedRaceDemo(t *testing.T) {
 	t.Skip("demonstration test: unskip to see the old read-committed race produce a negative balance")
@@ -49,6 +104,115 @@ func TestPostgresStore_CreateTransaction_SerializablePreventsOverdraft(t *testin
 	}
 	if !finalBalance.Equal(decimal.NewFromInt(10)) {
 		t.Fatalf("expected final balance of 10, got %s", finalBalance)
+	}
+	if got := store.RetryMetrics().Attempts; got != 1 {
+		t.Fatalf("expected one serialization retry, got %d", got)
+	}
+}
+
+func TestPostgresStore_CreateTransaction_RetriesContentionWhenFundsRemain(t *testing.T) {
+	sqlDB := openPostgresTestDB(t)
+	store := NewPostgresStore(sqlDB)
+	store.sleep = func(time.Duration) {}
+	cash, expense := seedPostgresBalance(t, store)
+	withdrawal := []EntryRequest{
+		{AccountID: expense.ID, Debit: decimal.NewFromInt(40), Credit: decimal.Zero},
+		{AccountID: cash.ID, Debit: decimal.Zero, Credit: decimal.NewFromInt(40)},
+	}
+
+	successes, failures, finalBalance := runConcurrentWithdrawals(t, store, cash.ID, withdrawal)
+
+	if successes != 2 || failures != 0 {
+		t.Fatalf("expected both withdrawals to succeed after retry, got successes=%d failures=%d", successes, failures)
+	}
+	if !finalBalance.Equal(decimal.NewFromInt(20)) {
+		t.Fatalf("expected final balance of 20, got %s", finalBalance)
+	}
+	if got := store.RetryMetrics().Attempts; got != 1 {
+		t.Fatalf("expected one serialization retry, got %d", got)
+	}
+}
+
+func TestPostgresStore_CreateTransaction_IdempotencyIsAtomic(t *testing.T) {
+	sqlDB := openPostgresTestDB(t)
+	store := NewPostgresStore(sqlDB)
+	store.sleep = func(time.Duration) {}
+	cash, expense := seedPostgresBalance(t, store)
+	entries := []EntryRequest{
+		{AccountID: expense.ID, Debit: decimal.NewFromInt(10)},
+		{AccountID: cash.ID, Credit: decimal.NewFromInt(10)},
+	}
+
+	start := make(chan struct{})
+	type result struct {
+		transaction *Transaction
+		existed     bool
+		err         error
+	}
+	results := make(chan result, 2)
+	var wg sync.WaitGroup
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			transaction, existed, err := store.CreateTransaction("same-key", entries)
+			results <- result{transaction: transaction, existed: existed, err: err}
+		}()
+	}
+	close(start)
+	wg.Wait()
+	close(results)
+
+	var transactionID string
+	newCount, existingCount := 0, 0
+	for result := range results {
+		if result.err != nil {
+			t.Fatalf("concurrent posting: %v", result.err)
+		}
+		if transactionID != "" && transactionID != result.transaction.ID {
+			t.Fatalf("expected one transaction, got %s and %s", transactionID, result.transaction.ID)
+		}
+		transactionID = result.transaction.ID
+		if result.existed {
+			existingCount++
+		} else {
+			newCount++
+		}
+	}
+	if newCount != 1 || existingCount != 1 {
+		t.Fatalf("expected one new and one existing response, got new=%d existing=%d", newCount, existingCount)
+	}
+	var transactionCount, entryCount, keyCount int
+	if err := sqlDB.QueryRow("SELECT COUNT(*) FROM transactions").Scan(&transactionCount); err != nil {
+		t.Fatal(err)
+	}
+	if err := sqlDB.QueryRow("SELECT COUNT(*) FROM entries").Scan(&entryCount); err != nil {
+		t.Fatal(err)
+	}
+	if err := sqlDB.QueryRow("SELECT COUNT(*) FROM idempotency_keys WHERE key = 'same-key'").Scan(&keyCount); err != nil {
+		t.Fatal(err)
+	}
+	if transactionCount != 2 || entryCount != 4 || keyCount != 1 {
+		t.Fatalf("unexpected persisted counts: transactions=%d entries=%d keys=%d", transactionCount, entryCount, keyCount)
+	}
+}
+
+func TestPostgresStore_CreateTransaction_FailedRequestDoesNotReserveKey(t *testing.T) {
+	sqlDB := openPostgresTestDB(t)
+	store := NewPostgresStore(sqlDB)
+	cash, expense := seedPostgresBalance(t, store)
+
+	_, _, err := store.CreateTransaction("retry-after-failure", withdrawalEntries(cash.ID, expense.ID))
+	if err == nil {
+		t.Fatal("expected insufficient-funds request to fail")
+	}
+	transaction, existed, err := store.CreateTransaction("retry-after-failure", []EntryRequest{
+		{AccountID: expense.ID, Debit: decimal.NewFromInt(10)},
+		{AccountID: cash.ID, Credit: decimal.NewFromInt(10)},
+	})
+	if err != nil || existed || transaction == nil {
+		t.Fatalf("retry after failed request: transaction=%#v existed=%t err=%v", transaction, existed, err)
 	}
 }
 

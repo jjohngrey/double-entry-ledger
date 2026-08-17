@@ -27,11 +27,17 @@ SET balance = balance + $2 - $3
 WHERE id = $1
 RETURNING balance;
 
--- name: GetIdempotencyKey :one
-SELECT transaction_id FROM idempotency_keys WHERE key = $1;
+-- name: ClaimIdempotencyKey :one
+INSERT INTO idempotency_keys (key, request_checksum, status)
+VALUES ($1, $2, 'processing')
+ON CONFLICT (key) DO UPDATE
+SET updated_at = NOW()
+RETURNING transaction_id, request_checksum, status;
 
--- name: CreateIdempotencyKey :exec
-INSERT INTO idempotency_keys (key, transaction_id) VALUES ($1, $2);
+-- name: CompleteIdempotencyKey :exec
+UPDATE idempotency_keys
+SET transaction_id = $2, status = 'completed', updated_at = NOW()
+WHERE key = $1;
 
 -- name: GetEntriesByTransactionID :many
 SELECT id, account_id, transaction_id, credit, debit, created_at

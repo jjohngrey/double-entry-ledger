@@ -12,6 +12,48 @@ import (
 	"github.com/google/uuid"
 )
 
+const claimIdempotencyKey = `-- name: ClaimIdempotencyKey :one
+INSERT INTO idempotency_keys (key, request_checksum, status)
+VALUES ($1, $2, 'processing')
+ON CONFLICT (key) DO UPDATE
+SET updated_at = NOW()
+RETURNING transaction_id, request_checksum, status
+`
+
+type ClaimIdempotencyKeyParams struct {
+	Key             string `json:"key"`
+	RequestChecksum string `json:"request_checksum"`
+}
+
+type ClaimIdempotencyKeyRow struct {
+	TransactionID   uuid.NullUUID `json:"transaction_id"`
+	RequestChecksum string        `json:"request_checksum"`
+	Status          string        `json:"status"`
+}
+
+func (q *Queries) ClaimIdempotencyKey(ctx context.Context, arg ClaimIdempotencyKeyParams) (ClaimIdempotencyKeyRow, error) {
+	row := q.db.QueryRowContext(ctx, claimIdempotencyKey, arg.Key, arg.RequestChecksum)
+	var i ClaimIdempotencyKeyRow
+	err := row.Scan(&i.TransactionID, &i.RequestChecksum, &i.Status)
+	return i, err
+}
+
+const completeIdempotencyKey = `-- name: CompleteIdempotencyKey :exec
+UPDATE idempotency_keys
+SET transaction_id = $2, status = 'completed', updated_at = NOW()
+WHERE key = $1
+`
+
+type CompleteIdempotencyKeyParams struct {
+	Key           string        `json:"key"`
+	TransactionID uuid.NullUUID `json:"transaction_id"`
+}
+
+func (q *Queries) CompleteIdempotencyKey(ctx context.Context, arg CompleteIdempotencyKeyParams) error {
+	_, err := q.db.ExecContext(ctx, completeIdempotencyKey, arg.Key, arg.TransactionID)
+	return err
+}
+
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (name, type) VALUES ($1, $2) RETURNING id
 `
@@ -49,20 +91,6 @@ func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (uuid.
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
-}
-
-const createIdempotencyKey = `-- name: CreateIdempotencyKey :exec
-INSERT INTO idempotency_keys (key, transaction_id) VALUES ($1, $2)
-`
-
-type CreateIdempotencyKeyParams struct {
-	Key           string    `json:"key"`
-	TransactionID uuid.UUID `json:"transaction_id"`
-}
-
-func (q *Queries) CreateIdempotencyKey(ctx context.Context, arg CreateIdempotencyKeyParams) error {
-	_, err := q.db.ExecContext(ctx, createIdempotencyKey, arg.Key, arg.TransactionID)
-	return err
 }
 
 const createTransaction = `-- name: CreateTransaction :one
@@ -169,17 +197,6 @@ func (q *Queries) GetEntriesByTransactionID(ctx context.Context, transactionID u
 		return nil, err
 	}
 	return items, nil
-}
-
-const getIdempotencyKey = `-- name: GetIdempotencyKey :one
-SELECT transaction_id FROM idempotency_keys WHERE key = $1
-`
-
-func (q *Queries) GetIdempotencyKey(ctx context.Context, key string) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getIdempotencyKey, key)
-	var transaction_id uuid.UUID
-	err := row.Scan(&transaction_id)
-	return transaction_id, err
 }
 
 const updateAccountBalance = `-- name: UpdateAccountBalance :one

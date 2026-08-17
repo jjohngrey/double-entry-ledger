@@ -75,9 +75,12 @@ type Entry struct {
 }
 
 type IdempotencyKey struct {
-	Key           string    `json:"key"`
-	TransactionID uuid.UUID `json:"transaction_id"`
-	CreatedAt     time.Time `json:"created_at"`
+	Key             string        `json:"key"`
+	TransactionID   uuid.NullUUID `json:"transaction_id"`
+	CreatedAt       time.Time     `json:"created_at"`
+	RequestChecksum string        `json:"request_checksum"`
+	Status          string        `json:"status"`
+	UpdatedAt       time.Time     `json:"updated_at"`
 }
 
 type Transaction struct {

@@ -5,23 +5,46 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"math/rand/v2"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jjohngrey/double-entry-ledger/internal/db"
 	"github.com/shopspring/decimal"
 )
 
+const (
+	maxSerializationRetries = 3
+	retryBaseDelay          = 10 * time.Millisecond
+)
+
+// ErrTransactionRetryExhausted is returned after PostgreSQL serialization
+// failures have used all retry attempts. Its text is safe to return to clients.
+var ErrTransactionRetryExhausted = errors.New("transaction temporarily unavailable; please retry")
+
+type TransactionRetryMetrics struct {
+	Attempts  uint64
+	Exhausted uint64
+}
+
 type PostgresStore struct {
-	db                *sql.DB
-	txOptions         *sql.TxOptions
-	afterBalanceCheck func(uuid.UUID)
+	db                 *sql.DB
+	txOptions          *sql.TxOptions
+	afterBalanceCheck  func(uuid.UUID)
+	retryAttempts      atomic.Uint64
+	retryExhausted     atomic.Uint64
+	sleep              func(time.Duration)
+	transactionAttempt func(string, []EntryRequest) (*Transaction, bool, error)
 }
 
 func NewPostgresStore(sqlDB *sql.DB) *PostgresStore {
 	return &PostgresStore{
 		db:        sqlDB,
 		txOptions: &sql.TxOptions{Isolation: sql.LevelSerializable},
+		sleep:     time.Sleep,
 	}
 }
 
@@ -75,7 +98,36 @@ func (s *PostgresStore) CreateTransaction(idempotencyKey string, entries []Entry
 	if err := ValidateTransaction(entries); err != nil {
 		return nil, false, err
 	}
+	checksum := TransactionRequestChecksum("", entries)
 
+	for retry := 0; ; retry++ {
+		var transaction *Transaction
+		var existed bool
+		var err error
+		if s.transactionAttempt != nil {
+			transaction, existed, err = s.transactionAttempt(idempotencyKey, entries)
+		} else {
+			transaction, existed, err = s.createTransactionAttempt(idempotencyKey, checksum, entries)
+		}
+		if err == nil {
+			return transaction, existed, nil
+		}
+		if !isSerializationFailure(err) {
+			return nil, false, err
+		}
+		if retry == maxSerializationRetries {
+			s.retryExhausted.Add(1)
+			log.Printf("ledger transaction serialization retry exhausted retries=%d", retry)
+			return nil, false, ErrTransactionRetryExhausted
+		}
+
+		s.retryAttempts.Add(1)
+		log.Printf("ledger transaction serialization retry attempt=%d", retry+1)
+		s.sleep(serializationRetryDelay(retry))
+	}
+}
+
+func (s *PostgresStore) createTransactionAttempt(idempotencyKey, checksum string, entries []EntryRequest) (*Transaction, bool, error) {
 	ctx := context.Background()
 	tx, err := s.db.BeginTx(ctx, s.txOptions)
 	if err != nil {
@@ -86,15 +138,22 @@ func (s *PostgresStore) CreateTransaction(idempotencyKey string, entries []Entry
 	q := db.New(tx)
 
 	if idempotencyKey != "" {
-		txID, err := q.GetIdempotencyKey(ctx, idempotencyKey)
-		if err == nil {
-			existing, err := s.buildTransaction(q, ctx, txID)
+		claim, err := q.ClaimIdempotencyKey(ctx, db.ClaimIdempotencyKeyParams{
+			Key:             idempotencyKey,
+			RequestChecksum: checksum,
+		})
+		if err != nil {
+			return nil, false, fmt.Errorf("claim idempotency key: %w", err)
+		}
+		if claim.RequestChecksum != checksum {
+			return nil, false, ErrIdempotencyKeyConflict
+		}
+		if claim.TransactionID.Valid {
+			existing, err := s.buildTransaction(q, ctx, claim.TransactionID.UUID)
 			if err != nil {
 				return nil, false, err
 			}
 			return existing, true, nil
-		} else if !errors.Is(err, sql.ErrNoRows) {
-			return nil, false, fmt.Errorf("check idempotency key: %w", err)
 		}
 	}
 
@@ -142,11 +201,11 @@ func (s *PostgresStore) CreateTransaction(idempotencyKey string, entries []Entry
 	}
 
 	if idempotencyKey != "" {
-		if err := q.CreateIdempotencyKey(ctx, db.CreateIdempotencyKeyParams{
+		if err := q.CompleteIdempotencyKey(ctx, db.CompleteIdempotencyKeyParams{
 			Key:           idempotencyKey,
-			TransactionID: txID,
+			TransactionID: uuid.NullUUID{UUID: txID, Valid: true},
 		}); err != nil {
-			return nil, false, fmt.Errorf("store idempotency key: %w", err)
+			return nil, false, fmt.Errorf("complete idempotency key: %w", err)
 		}
 	}
 
@@ -159,6 +218,23 @@ func (s *PostgresStore) CreateTransaction(idempotencyKey string, entries []Entry
 		Entries:   ledgerEntries,
 		Timestamp: time.Now(),
 	}, false, nil
+}
+
+func (s *PostgresStore) RetryMetrics() TransactionRetryMetrics {
+	return TransactionRetryMetrics{
+		Attempts:  s.retryAttempts.Load(),
+		Exhausted: s.retryExhausted.Load(),
+	}
+}
+
+func isSerializationFailure(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "40001"
+}
+
+func serializationRetryDelay(retry int) time.Duration {
+	backoff := retryBaseDelay * time.Duration(1<<retry)
+	return backoff/2 + time.Duration(rand.Int64N(int64(backoff/2)+1))
 }
 
 func (s *PostgresStore) GetAccountEntries(accountID string, params GetAccountEntriesParams) (GetAccountEntriesResponse, error) {
@@ -207,7 +283,7 @@ func (s *PostgresStore) GetAccountEntries(accountID string, params GetAccountEnt
 }
 
 func newPostgresStoreWithTxOptions(sqlDB *sql.DB, txOptions *sql.TxOptions) *PostgresStore {
-	return &PostgresStore{db: sqlDB, txOptions: txOptions}
+	return &PostgresStore{db: sqlDB, txOptions: txOptions, sleep: time.Sleep}
 }
 
 type postgresEntry struct {

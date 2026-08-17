@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -101,8 +102,20 @@ func CreateTransactionHandler(store ledger.Store) http.HandlerFunc {
 			return
 		}
 
-		transaction, existed, err := store.CreateTransaction(req.IdempotencyKey, req.Entries)
+		idempotencyKey := r.Header.Get("Idempotency-Key")
+		if idempotencyKey == "" {
+			idempotencyKey = req.IdempotencyKey
+		}
+		transaction, existed, err := store.CreateTransaction(idempotencyKey, req.Entries)
 		if err != nil {
+			if errors.Is(err, ledger.ErrIdempotencyKeyConflict) {
+				writeError(w, http.StatusConflict, err.Error())
+				return
+			}
+			if errors.Is(err, ledger.ErrTransactionRetryExhausted) {
+				writeError(w, http.StatusServiceUnavailable, ledger.ErrTransactionRetryExhausted.Error())
+				return
+			}
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
