@@ -1,0 +1,1 @@
+{"stage":9,"label":"multi-operation-posting-10k-target","predecessor":"2026-08-21_posting_batch_1000tps","change_under_test":"transparent multi-operation posting batches at 10k offered load","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

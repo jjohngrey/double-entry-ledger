@@ -1,0 +1,48 @@
+File: ledger
+Type: cpu
+Time: 2026-08-17 14:09:12 EDT
+Duration: 30.17s, Total samples = 7.37s (24.43%)
+Showing nodes accounting for 7.13s, 96.74% of 7.37s total
+Dropped 136 nodes (cum <= 0.04s)
+Showing top 40 nodes out of 153
+      flat  flat%   sum%        cum   cum%
+     3.21s 43.55% 43.55%      3.21s 43.55%  syscall.rawsyscalln
+     2.14s 29.04% 72.59%      2.14s 29.04%  runtime.kevent
+     0.92s 12.48% 85.07%      0.92s 12.48%  runtime.pthread_cond_signal
+     0.76s 10.31% 95.39%      0.76s 10.31%  runtime.pthread_cond_wait
+     0.08s  1.09% 96.47%      0.08s  1.09%  runtime.usleep
+     0.01s  0.14% 96.61%      0.04s  0.54%  runtime.mallocgc
+     0.01s  0.14% 96.74%      0.08s  1.09%  runtime.stealWork
+         0     0% 96.74%      0.24s  3.26%  bufio.(*Writer).Flush
+         0     0% 96.74%      0.55s  7.46%  database/sql.(*DB).BeginTx
+         0     0% 96.74%      0.55s  7.46%  database/sql.(*DB).BeginTx.func1
+         0     0% 96.74%      0.09s  1.22%  database/sql.(*DB).ExecContext
+         0     0% 96.74%      0.09s  1.22%  database/sql.(*DB).ExecContext.func1
+         0     0% 96.74%      0.09s  1.22%  database/sql.(*DB).QueryContext
+         0     0% 96.74%      0.09s  1.22%  database/sql.(*DB).QueryContext.func1
+         0     0% 96.74%      0.55s  7.46%  database/sql.(*DB).begin
+         0     0% 96.74%      0.55s  7.46%  database/sql.(*DB).beginDC
+         0     0% 96.74%      0.55s  7.46%  database/sql.(*DB).beginDC.func1
+         0     0% 96.74%      0.09s  1.22%  database/sql.(*DB).exec
+         0     0% 96.74%      1.13s 15.33%  database/sql.(*DB).execDC
+         0     0% 96.74%      1.13s 15.33%  database/sql.(*DB).execDC.func2
+         0     0% 96.74%      0.09s  1.22%  database/sql.(*DB).query
+         0     0% 96.74%      0.86s 11.67%  database/sql.(*DB).queryDC
+         0     0% 96.74%      0.86s 11.67%  database/sql.(*DB).queryDC.func1
+         0     0% 96.74%      0.73s  9.91%  database/sql.(*DB).retry
+         0     0% 96.74%      0.17s  2.31%  database/sql.(*Tx).Commit
+         0     0% 96.74%      0.17s  2.31%  database/sql.(*Tx).Commit.func1
+         0     0% 96.74%      1.04s 14.11%  database/sql.(*Tx).ExecContext
+         0     0% 96.74%      0.78s 10.58%  database/sql.(*Tx).QueryContext
+         0     0% 96.74%      0.52s  7.06%  database/sql.(*Tx).QueryRowContext (inline)
+         0     0% 96.74%      0.21s  2.85%  database/sql.(*Tx).Rollback
+         0     0% 96.74%      0.21s  2.85%  database/sql.(*Tx).rollback
+         0     0% 96.74%      0.21s  2.85%  database/sql.(*Tx).rollback.func1
+         0     0% 96.74%      0.55s  7.46%  database/sql.ctxDriverBegin
+         0     0% 96.74%      1.13s 15.33%  database/sql.ctxDriverExec
+         0     0% 96.74%      0.86s 11.67%  database/sql.ctxDriverQuery
+         0     0% 96.74%      2.92s 39.62%  database/sql.withLock
+         0     0% 96.74%      0.98s 13.30%  github.com/go-chi/chi/v5.(*Mux).ServeHTTP
+         0     0% 96.74%      0.98s 13.30%  github.com/go-chi/chi/v5.(*Mux).routeHTTP
+         0     0% 96.74%      0.55s  7.46%  github.com/jackc/pgx/v5.(*Conn).BeginTx
+         0     0% 96.74%      2.06s 27.95%  github.com/jackc/pgx/v5.(*Conn).Exec

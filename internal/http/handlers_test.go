@@ -2,11 +2,15 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jjohngrey/double-entry-ledger/internal/ledger"
 	"github.com/shopspring/decimal"
 )
@@ -15,6 +19,21 @@ type exhaustedRetryStore struct{ ledger.Store }
 
 func (s exhaustedRetryStore) CreateTransaction(string, []ledger.EntryRequest) (*ledger.Transaction, bool, error) {
 	return nil, false, ledger.ErrTransactionRetryExhausted
+}
+
+type projectionStatusReaderStub struct {
+	status      ledger.TransactionProjectionStatus
+	err         error
+	transaction string
+	consumer    string
+	calls       int
+}
+
+func (s *projectionStatusReaderStub) GetTransactionProjectionStatus(_ context.Context, transactionID, consumer string) (ledger.TransactionProjectionStatus, error) {
+	s.calls++
+	s.transaction = transactionID
+	s.consumer = consumer
+	return s.status, s.err
 }
 
 func TestCreateTransactionHandler_BadJSON(t *testing.T) {
@@ -126,5 +145,67 @@ func TestGetBalanceHandler_MissingAccountID(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestGetTransactionProjectionStatusHandler(t *testing.T) {
+	transactionID := uuid.NewString()
+	eventID := uuid.NewString()
+	store := &projectionStatusReaderStub{status: ledger.TransactionProjectionStatus{
+		TransactionID: transactionID,
+		EventID:       eventID,
+		Consumer:      ledger.AggregateConsumerName,
+		Projected:     true,
+	}}
+	router := chi.NewRouter()
+	router.Get("/transactions/{transaction_id}/projection-status", GetTransactionProjectionStatusHandler(store))
+	req := httptest.NewRequest(http.MethodGet, "/transactions/"+transactionID+"/projection-status", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var response ledger.TransactionProjectionStatus
+	if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if response != store.status {
+		t.Fatalf("unexpected response: %#v", response)
+	}
+	if store.calls != 1 || store.transaction != transactionID || store.consumer != ledger.AggregateConsumerName {
+		t.Fatalf("unexpected store call: calls=%d transaction=%q consumer=%q", store.calls, store.transaction, store.consumer)
+	}
+}
+
+func TestGetTransactionProjectionStatusHandlerRejectsMalformedID(t *testing.T) {
+	store := &projectionStatusReaderStub{}
+	router := chi.NewRouter()
+	router.Get("/transactions/{transaction_id}/projection-status", GetTransactionProjectionStatusHandler(store))
+	req := httptest.NewRequest(http.MethodGet, "/transactions/not-a-uuid/projection-status", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+	if store.calls != 0 {
+		t.Fatalf("malformed ID reached the store %d times", store.calls)
+	}
+}
+
+func TestGetTransactionProjectionStatusHandlerReturnsNotFound(t *testing.T) {
+	store := &projectionStatusReaderStub{err: errors.Join(ledger.ErrTransactionProjectionNotFound, errors.New("missing transaction"))}
+	router := chi.NewRouter()
+	router.Get("/transactions/{transaction_id}/projection-status", GetTransactionProjectionStatusHandler(store))
+	req := httptest.NewRequest(http.MethodGet, "/transactions/"+uuid.NewString()+"/projection-status", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
 	}
 }

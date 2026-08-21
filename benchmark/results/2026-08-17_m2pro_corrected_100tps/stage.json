@@ -1,0 +1,1 @@
+{"stage":4,"label":"exact-projection-correlation-control","predecessor":"2026-08-17_m2pro_tuned_read_committed_100tps","change_under_test":"exact transaction projection correlation and clean warm-up drain","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

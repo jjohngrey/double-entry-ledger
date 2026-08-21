@@ -1,0 +1,1 @@
+{"stage":8,"label":"multi-operation-posting-control","predecessor":"2026-08-21_optimized_target_10ktps","change_under_test":"transparent posting micro-batches with size 32, 500us formation window, and four writers","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

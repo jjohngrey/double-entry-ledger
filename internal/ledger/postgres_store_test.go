@@ -88,7 +88,7 @@ func TestPostgresStore_CreateTransaction_ReadCommittedRaceDemo(t *testing.T) {
 	}
 }
 
-func TestPostgresStore_CreateTransaction_SerializablePreventsOverdraft(t *testing.T) {
+func TestPostgresStore_CreateTransaction_RowLocksPreventOverdraft(t *testing.T) {
 	sqlDB := openPostgresTestDB(t)
 	store := NewPostgresStore(sqlDB)
 	cash, expense := seedPostgresBalance(t, store)
@@ -105,8 +105,8 @@ func TestPostgresStore_CreateTransaction_SerializablePreventsOverdraft(t *testin
 	if !finalBalance.Equal(decimal.NewFromInt(10)) {
 		t.Fatalf("expected final balance of 10, got %s", finalBalance)
 	}
-	if got := store.RetryMetrics().Attempts; got != 1 {
-		t.Fatalf("expected one serialization retry, got %d", got)
+	if got := store.RetryMetrics().Attempts; got != 0 {
+		t.Fatalf("expected row locking without a serialization retry, got %d", got)
 	}
 }
 
@@ -128,8 +128,8 @@ func TestPostgresStore_CreateTransaction_RetriesContentionWhenFundsRemain(t *tes
 	if !finalBalance.Equal(decimal.NewFromInt(20)) {
 		t.Fatalf("expected final balance of 20, got %s", finalBalance)
 	}
-	if got := store.RetryMetrics().Attempts; got != 1 {
-		t.Fatalf("expected one serialization retry, got %d", got)
+	if got := store.RetryMetrics().Attempts; got != 0 {
+		t.Fatalf("expected row locking without a serialization retry, got %d", got)
 	}
 }
 
@@ -203,7 +203,10 @@ func TestPostgresStore_CreateTransaction_FailedRequestDoesNotReserveKey(t *testi
 	store := NewPostgresStore(sqlDB)
 	cash, expense := seedPostgresBalance(t, store)
 
-	_, _, err := store.CreateTransaction("retry-after-failure", withdrawalEntries(cash.ID, expense.ID))
+	_, _, err := store.CreateTransaction("retry-after-failure", []EntryRequest{
+		{AccountID: expense.ID, Debit: decimal.NewFromInt(110)},
+		{AccountID: cash.ID, Credit: decimal.NewFromInt(110)},
+	})
 	if err == nil {
 		t.Fatal("expected insufficient-funds request to fail")
 	}
@@ -213,6 +216,79 @@ func TestPostgresStore_CreateTransaction_FailedRequestDoesNotReserveKey(t *testi
 	})
 	if err != nil || existed || transaction == nil {
 		t.Fatalf("retry after failed request: transaction=%#v existed=%t err=%v", transaction, existed, err)
+	}
+}
+
+func TestPostgresStore_CreateTransaction_BatchesMoreThanTwoEntries(t *testing.T) {
+	sqlDB := openPostgresTestDB(t)
+	store := NewPostgresStore(sqlDB)
+	cash, err := store.CreateAccount("Batch cash", AssetType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expense, err := store.CreateAccount("Batch expense", ExpenseType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	revenue, err := store.CreateAccount("Batch revenue", RevenueType)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	transaction, existed, err := store.CreateTransaction("batch-more-than-two", []EntryRequest{
+		{AccountID: cash.ID, Debit: decimal.NewFromInt(60)},
+		{AccountID: expense.ID, Debit: decimal.NewFromInt(40)},
+		{AccountID: revenue.ID, Credit: decimal.NewFromInt(100)},
+	})
+	if err != nil || existed {
+		t.Fatalf("create transaction: existed=%v err=%v", existed, err)
+	}
+	if len(transaction.Entries) != 3 {
+		t.Fatalf("entry count=%d, want 3", len(transaction.Entries))
+	}
+	for accountID, expected := range map[string]int64{cash.ID: 60, expense.ID: 40, revenue.ID: 100} {
+		balance, err := store.GetBalance(accountID)
+		if err != nil || !balance.Equal(decimal.NewFromInt(expected)) {
+			t.Fatalf("balance account=%s got=%s want=%d err=%v", accountID, balance, expected, err)
+		}
+	}
+}
+
+func TestPostgresStore_CreateTransaction_BatchesRepeatedAccountIDs(t *testing.T) {
+	sqlDB := openPostgresTestDB(t)
+	store := NewPostgresStore(sqlDB)
+	cash, err := store.CreateAccount("Repeated cash", AssetType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	revenue, err := store.CreateAccount("Repeated revenue", RevenueType)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	request := []EntryRequest{
+		{AccountID: cash.ID, Debit: decimal.NewFromInt(30)},
+		{AccountID: revenue.ID, Credit: decimal.NewFromInt(20)},
+		{AccountID: cash.ID, Debit: decimal.NewFromInt(20)},
+		{AccountID: revenue.ID, Credit: decimal.NewFromInt(30)},
+	}
+	transaction, existed, err := store.CreateTransaction("batch-repeated", request)
+	if err != nil || existed {
+		t.Fatalf("create transaction: existed=%v err=%v", existed, err)
+	}
+	if len(transaction.Entries) != len(request) {
+		t.Fatalf("entry count=%d, want %d", len(transaction.Entries), len(request))
+	}
+	for i, entry := range transaction.Entries {
+		if entry.AccountID != request[i].AccountID || !entry.Debit.Equal(request[i].Debit) || !entry.Credit.Equal(request[i].Credit) {
+			t.Fatalf("entry %d did not preserve request order: got=%#v request=%#v", i, entry, request[i])
+		}
+	}
+	for _, accountID := range []string{cash.ID, revenue.ID} {
+		balance, err := store.GetBalance(accountID)
+		if err != nil || !balance.Equal(decimal.NewFromInt(50)) {
+			t.Fatalf("balance account=%s got=%s want=50 err=%v", accountID, balance, err)
+		}
 	}
 }
 
@@ -268,7 +344,8 @@ func truncatePostgresTestData(t *testing.T, sqlDB *sql.DB) {
 	t.Helper()
 
 	_, err := sqlDB.Exec(`
-		TRUNCATE idempotency_keys, entries, transactions, accounts
+		TRUNCATE processed_events, daily_account_aggregates, daily_ledger_aggregates,
+		outbox_events, saga_steps, sagas, idempotency_keys, entries, transactions, accounts
 		RESTART IDENTITY CASCADE
 	`)
 	if err != nil {
@@ -321,7 +398,7 @@ func runConcurrentWithdrawals(t *testing.T, store *PostgresStore, guardedAccount
 	start := make(chan struct{})
 	balanceChecked := make(chan struct{}, 2)
 	release := make(chan struct{})
-	store.afterBalanceCheck = func(accountID uuid.UUID) {
+	store.beforeAccountLock = func(accountID uuid.UUID) {
 		if accountID != guardedID {
 			return
 		}

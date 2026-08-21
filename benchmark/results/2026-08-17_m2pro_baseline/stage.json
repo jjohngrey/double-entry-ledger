@@ -1,0 +1,1 @@
+{"stage":0,"label":"diagnostic-baseline","predecessor":null,"change_under_test":"initial behavior before index, transaction, pool, and worker tuning","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

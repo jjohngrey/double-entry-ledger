@@ -11,7 +11,7 @@ INSERT INTO entries (account_id, transaction_id, credit, debit) VALUES ($1, $2, 
 SELECT id, account_id, transaction_id, credit, debit, created_at
 FROM entries
 WHERE account_id = $1 AND created_at >= $2 AND created_at <= $3
-ORDER BY created_at ASC;
+ORDER BY created_at ASC, id ASC;
 
 -- name: GetAccountBalance :one
 SELECT CAST(CASE

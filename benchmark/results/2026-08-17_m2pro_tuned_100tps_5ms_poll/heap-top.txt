@@ -1,0 +1,46 @@
+File: ledger
+Type: inuse_space
+Time: 2026-08-17 14:11:27 EDT
+Showing nodes accounting for 6632.67kB, 100% of 6632.67kB total
+Showing top 40 nodes out of 70
+      flat  flat%   sum%        cum   cum%
+ 1184.27kB 17.86% 17.86%  1184.27kB 17.86%  runtime/pprof.StartCPUProfile
+ 1050.86kB 15.84% 33.70%  1050.86kB 15.84%  github.com/jackc/pgx/v5/internal/stmtcache.NewLRUCache (inline)
+  809.97kB 12.21% 45.91%   809.97kB 12.21%  github.com/nats-io/nats%2ego.(*js).PullSubscribe
+     514kB  7.75% 53.66%      514kB  7.75%  bufio.NewWriterSize
+     513kB  7.73% 61.39%      513kB  7.73%  runtime.mallocgc
+  512.28kB  7.72% 69.12%   512.28kB  7.72%  github.com/jackc/pgx/v5/pgconn.(*PgConn).receiveMessage
+  512.12kB  7.72% 76.84%   512.12kB  7.72%  net/http.ListenAndServe
+  512.08kB  7.72% 84.56%   512.08kB  7.72%  github.com/jackc/pgx/v5/pgconn.(*PgConn).Prepare
+  512.05kB  7.72% 92.28%   512.05kB  7.72%  github.com/nats-io/nats%2ego.(*Subscription).Fetch.func3
+  512.02kB  7.72%   100%   512.02kB  7.72%  time.map.init.0
+         0     0%   100%  1037.71kB 15.65%  database/sql.(*DB).BeginTx
+         0     0%   100%  1037.71kB 15.65%  database/sql.(*DB).BeginTx.func1
+         0     0%   100%   525.43kB  7.92%  database/sql.(*DB).Ping (inline)
+         0     0%   100%   525.43kB  7.92%  database/sql.(*DB).PingContext
+         0     0%   100%   525.43kB  7.92%  database/sql.(*DB).PingContext.func1
+         0     0%   100%  1037.71kB 15.65%  database/sql.(*DB).begin
+         0     0%   100%  1563.14kB 23.57%  database/sql.(*DB).conn
+         0     0%   100%   512.08kB  7.72%  database/sql.(*DB).queryDC
+         0     0%   100%   512.08kB  7.72%  database/sql.(*DB).queryDC.func1
+         0     0%   100%  1563.14kB 23.57%  database/sql.(*DB).retry
+         0     0%   100%   512.08kB  7.72%  database/sql.(*Tx).QueryContext
+         0     0%   100%   512.08kB  7.72%  database/sql.(*Tx).QueryRowContext (inline)
+         0     0%   100%   512.08kB  7.72%  database/sql.ctxDriverQuery
+         0     0%   100%   512.08kB  7.72%  database/sql.withLock
+         0     0%   100%   525.43kB  7.92%  github.com/go-chi/chi/v5.(*Mux).ServeHTTP
+         0     0%   100%   525.43kB  7.92%  github.com/go-chi/chi/v5.(*Mux).routeHTTP
+         0     0%   100%   525.43kB  7.92%  github.com/golang-migrate/migrate/v4/database/postgres.WithInstance
+         0     0%   100%   512.08kB  7.72%  github.com/jackc/pgx/v5.(*Conn).Prepare
+         0     0%   100%   512.08kB  7.72%  github.com/jackc/pgx/v5.(*Conn).Query
+         0     0%   100%   512.08kB  7.72%  github.com/jackc/pgx/v5.(*Conn).getStatementDescription
+         0     0%   100%  1563.14kB 23.57%  github.com/jackc/pgx/v5.ConnectConfig
+         0     0%   100%  1563.14kB 23.57%  github.com/jackc/pgx/v5.connect
+         0     0%   100%   512.28kB  7.72%  github.com/jackc/pgx/v5/pgconn.ConnectConfig
+         0     0%   100%   512.28kB  7.72%  github.com/jackc/pgx/v5/pgconn.connectOne
+         0     0%   100%   512.28kB  7.72%  github.com/jackc/pgx/v5/pgconn.connectPreferred
+         0     0%   100%   512.08kB  7.72%  github.com/jackc/pgx/v5/stdlib.(*Conn).QueryContext
+         0     0%   100%  1563.14kB 23.57%  github.com/jackc/pgx/v5/stdlib.(*driverConnector).Connect
+         0     0%   100%   525.43kB  7.92%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).CreateTransaction
+         0     0%   100%   512.28kB  7.72%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).ProcessOutbox
+         0     0%   100%   512.08kB  7.72%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).PublishCommittedEvents

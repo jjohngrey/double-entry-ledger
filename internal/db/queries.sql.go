@@ -124,7 +124,7 @@ const getAccountEntries = `-- name: GetAccountEntries :many
 SELECT id, account_id, transaction_id, credit, debit, created_at
 FROM entries
 WHERE account_id = $1 AND created_at >= $2 AND created_at <= $3
-ORDER BY created_at ASC
+ORDER BY created_at ASC, id ASC
 `
 
 type GetAccountEntriesParams struct {

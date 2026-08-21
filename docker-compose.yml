@@ -5,7 +5,7 @@ services:
     # environment:
 
   postgres:
-    image: postgres:16
+    image: postgres:16.13@sha256:71e27bf60b70bded003791b5573f8b808365613f341df20ffcf0c1ed7bc13ddf
     environment:
       POSTGRES_DB: ledger
       POSTGRES_USER: postgres
@@ -15,5 +15,49 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # Separate ports and volumes keep destructive benchmark seeding away from
+  # the normal development database.
+  postgres-benchmark:
+    image: postgres:16.13@sha256:71e27bf60b70bded003791b5573f8b808365613f341df20ffcf0c1ed7bc13ddf
+    environment:
+      POSTGRES_DB: ledger_benchmark
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ledger_benchmark"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - postgres_benchmark_data:/var/lib/postgresql/data
+
+  nats:
+    image: nats:2.11.17-alpine@sha256:e4bf19f15fd3218814a4e3c9e0064e1334bd8aa20d5984b9f1a0afd084f8cc00
+    command: ["-js", "-sd", "/data"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats_data:/data
+
+  nats-benchmark:
+    image: nats:2.11.17-alpine@sha256:e4bf19f15fd3218814a4e3c9e0064e1334bd8aa20d5984b9f1a0afd084f8cc00
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "4223:4222"
+      - "8223:8222"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - nats_benchmark_data:/data
+
 volumes:
   postgres_data:
+  nats_data:
+  postgres_benchmark_data:
+  nats_benchmark_data:

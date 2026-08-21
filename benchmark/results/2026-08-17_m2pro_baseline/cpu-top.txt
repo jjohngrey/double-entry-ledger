@@ -1,0 +1,48 @@
+File: double-entry-ledger-baseline
+Type: cpu
+Time: 2026-08-17 11:53:05 EDT
+Duration: 30.14s, Total samples = 8.05s (26.71%)
+Showing nodes accounting for 7.45s, 92.55% of 8.05s total
+Dropped 230 nodes (cum <= 0.04s)
+Showing top 40 nodes out of 165
+      flat  flat%   sum%        cum   cum%
+     3.65s 45.34% 45.34%      3.65s 45.34%  syscall.rawsyscalln
+     1.84s 22.86% 68.20%      1.84s 22.86%  runtime.kevent
+     0.89s 11.06% 79.25%      0.89s 11.06%  runtime.pthread_cond_signal
+     0.81s 10.06% 89.32%      0.81s 10.06%  runtime.pthread_cond_wait
+     0.16s  1.99% 91.30%      0.16s  1.99%  runtime.usleep
+     0.02s  0.25% 91.55%      1.66s 20.62%  runtime.netpoll
+     0.02s  0.25% 91.80%      0.13s  1.61%  runtime.stealWork
+     0.01s  0.12% 91.93%      0.94s 11.68%  bufio.(*Writer).Flush
+     0.01s  0.12% 92.05%      1.29s 16.02%  database/sql.(*DB).QueryContext.func1
+     0.01s  0.12% 92.17%      0.05s  0.62%  encoding/json.structEncoder.encode
+     0.01s  0.12% 92.30%      0.11s  1.37%  github.com/jackc/pgx/v5/pgconn.(*MultiResultReader).NextResult
+     0.01s  0.12% 92.42%      0.82s 10.19%  github.com/jackc/pgx/v5/pgproto3.(*chunkReader).Next
+     0.01s  0.12% 92.55%      2.80s 34.78%  runtime.findRunnable
+         0     0% 92.55%      0.30s  3.73%  bufio.(*Reader).Peek
+         0     0% 92.55%      0.30s  3.73%  bufio.(*Reader).fill
+         0     0% 92.55%      0.20s  2.48%  database/sql.(*DB).BeginTx
+         0     0% 92.55%      0.20s  2.48%  database/sql.(*DB).BeginTx.func1
+         0     0% 92.55%      1.29s 16.02%  database/sql.(*DB).QueryContext
+         0     0% 92.55%      0.95s 11.80%  database/sql.(*DB).QueryRowContext
+         0     0% 92.55%      0.20s  2.48%  database/sql.(*DB).begin
+         0     0% 92.55%      0.19s  2.36%  database/sql.(*DB).beginDC
+         0     0% 92.55%      0.19s  2.36%  database/sql.(*DB).beginDC.func1
+         0     0% 92.55%      0.10s  1.24%  database/sql.(*DB).conn
+         0     0% 92.55%      0.47s  5.84%  database/sql.(*DB).execDC
+         0     0% 92.55%      0.47s  5.84%  database/sql.(*DB).execDC.func2
+         0     0% 92.55%      1.28s 15.90%  database/sql.(*DB).query
+         0     0% 92.55%      1.90s 23.60%  database/sql.(*DB).queryDC
+         0     0% 92.55%      1.90s 23.60%  database/sql.(*DB).queryDC.func1
+         0     0% 92.55%      1.52s 18.88%  database/sql.(*DB).retry
+         0     0% 92.55%      0.08s  0.99%  database/sql.(*Tx).Commit
+         0     0% 92.55%      0.08s  0.99%  database/sql.(*Tx).Commit.func1
+         0     0% 92.55%      0.44s  5.47%  database/sql.(*Tx).ExecContext
+         0     0% 92.55%      0.71s  8.82%  database/sql.(*Tx).QueryContext
+         0     0% 92.55%      0.66s  8.20%  database/sql.(*Tx).QueryRowContext
+         0     0% 92.55%      0.19s  2.36%  database/sql.ctxDriverBegin
+         0     0% 92.55%      0.47s  5.84%  database/sql.ctxDriverExec
+         0     0% 92.55%      1.90s 23.60%  database/sql.ctxDriverQuery
+         0     0% 92.55%      2.67s 33.17%  database/sql.withLock
+         0     0% 92.55%      0.05s  0.62%  encoding/json.(*Encoder).Encode
+         0     0% 92.55%      0.05s  0.62%  encoding/json.(*encodeState).marshal

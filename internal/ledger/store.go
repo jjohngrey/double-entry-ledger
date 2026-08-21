@@ -1,6 +1,7 @@
 package ledger
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -17,13 +18,29 @@ type Store interface {
 	GetAccountEntries(accountID string, params GetAccountEntriesParams) (GetAccountEntriesResponse, error)
 }
 
+// TransferStore is kept separate from Store so existing transaction-only
+// integrations do not accidentally acquire a cross-ledger capability.
+type TransferStore interface {
+	CreateAccountInLedger(ledgerID, name string, accType AccountType) (*Account, error)
+	CreateTransfer(req TransferRequest) (*TransferResponse, bool, error)
+	GetTransfer(id string) (*TransferResponse, error)
+	ProcessOutbox(limit int) (int, error)
+}
+
 var _ Store = (*MemoryStore)(nil) // compile-time assertion that MemoryStore implements Store
 
 type MemoryStore struct {
-	mu              sync.RWMutex
-	accounts        map[string]Account
-	transactions    []Transaction
-	idempotencyKeys map[string]memoryIdempotencyKey
+	mu               sync.RWMutex
+	accounts         map[string]Account
+	transactions     []Transaction
+	idempotencyKeys  map[string]memoryIdempotencyKey
+	sagas            map[string]*memorySaga
+	transferKeys     map[string]string
+	outbox           []*memoryOutboxEvent
+	clearingAccounts map[string]string
+	// DestinationFailure is a test/operations hook. Returning a transient
+	// error schedules a bounded retry; any other error starts compensation.
+	DestinationFailure func(TransferRequest) error
 }
 
 type memoryIdempotencyKey struct {
@@ -33,15 +50,24 @@ type memoryIdempotencyKey struct {
 
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		accounts:        make(map[string]Account),
-		transactions:    []Transaction{},
-		idempotencyKeys: make(map[string]memoryIdempotencyKey),
+		accounts:         make(map[string]Account),
+		transactions:     []Transaction{},
+		idempotencyKeys:  make(map[string]memoryIdempotencyKey),
+		sagas:            make(map[string]*memorySaga),
+		transferKeys:     make(map[string]string),
+		clearingAccounts: make(map[string]string),
 	}
 }
 
 // Public methods
 
 func (s *MemoryStore) CreateAccount(name string, accType AccountType) (*Account, error) {
+	return s.CreateAccountInLedger(DefaultLedgerID, name, accType)
+}
+
+const DefaultLedgerID = "00000000-0000-0000-0000-000000000000"
+
+func (s *MemoryStore) CreateAccountInLedger(ledgerID, name string, accType AccountType) (*Account, error) {
 	if err := ValidateAccount(name, accType); err != nil {
 		return nil, err
 	}
@@ -52,10 +78,7 @@ func (s *MemoryStore) CreateAccount(name string, accType AccountType) (*Account,
 	id := uuid.New().String()
 
 	account := &Account{
-		ID:      id,
-		Name:    name,
-		Type:    accType,
-		Balance: decimal.Zero,
+		ID: id, LedgerID: ledgerID, Name: name, Type: accType, Balance: decimal.Zero,
 	}
 
 	s.accounts[id] = *account
@@ -156,6 +179,12 @@ func (s *MemoryStore) createTransaction(entries []EntryRequest) (*Transaction, e
 			return nil, fmt.Errorf("Account with ID %s not found", entry.AccountID)
 		}
 	}
+	ledgerID := s.accounts[entries[0].AccountID].LedgerID
+	for _, entry := range entries[1:] {
+		if s.accounts[entry.AccountID].LedgerID != ledgerID {
+			return nil, errors.New("a transaction cannot span ledger boundaries")
+		}
+	}
 
 	for _, entry := range entries {
 		account := s.accounts[entry.AccountID]
@@ -177,6 +206,7 @@ func (s *MemoryStore) createTransaction(entries []EntryRequest) (*Transaction, e
 
 	transaction := &Transaction{
 		ID:        transactionID,
+		LedgerID:  ledgerID,
 		Entries:   transactionEntries,
 		Timestamp: sec,
 	}

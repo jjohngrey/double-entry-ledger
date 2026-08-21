@@ -1,0 +1,48 @@
+File: ledger
+Type: cpu
+Time: 2026-08-17 14:13:09 EDT
+Duration: 30.15s, Total samples = 7.61s (25.24%)
+Showing nodes accounting for 7.38s, 96.98% of 7.61s total
+Dropped 125 nodes (cum <= 0.04s)
+Showing top 40 nodes out of 167
+      flat  flat%   sum%        cum   cum%
+     3.56s 46.78% 46.78%      3.56s 46.78%  syscall.rawsyscalln
+     2.04s 26.81% 73.59%      2.04s 26.81%  runtime.kevent
+     0.87s 11.43% 85.02%      0.87s 11.43%  runtime.pthread_cond_signal
+     0.69s  9.07% 94.09%      0.69s  9.07%  runtime.pthread_cond_wait
+     0.12s  1.58% 95.66%      0.12s  1.58%  runtime.usleep
+     0.04s  0.53% 96.19%      0.12s  1.58%  runtime.stealWork
+     0.02s  0.26% 96.45%      2.90s 38.11%  runtime.findRunnable
+     0.02s  0.26% 96.71%      0.05s  0.66%  runtime.scanObject
+     0.01s  0.13% 96.85%      0.56s  7.36%  main.main.func1
+     0.01s  0.13% 96.98%      1.16s 15.24%  syscall.Read (inline)
+         0     0% 96.98%      0.08s  1.05%  bufio.(*Reader).Peek
+         0     0% 96.98%      0.08s  1.05%  bufio.(*Reader).fill
+         0     0% 96.98%      0.25s  3.29%  bufio.(*Writer).Flush
+         0     0% 96.98%      0.51s  6.70%  database/sql.(*DB).BeginTx
+         0     0% 96.98%      0.51s  6.70%  database/sql.(*DB).BeginTx.func1
+         0     0% 96.98%      0.08s  1.05%  database/sql.(*DB).ExecContext
+         0     0% 96.98%      0.08s  1.05%  database/sql.(*DB).ExecContext.func1
+         0     0% 96.98%      0.24s  3.15%  database/sql.(*DB).QueryContext
+         0     0% 96.98%      0.24s  3.15%  database/sql.(*DB).QueryContext.func1
+         0     0% 96.98%      0.07s  0.92%  database/sql.(*DB).QueryRowContext
+         0     0% 96.98%      0.51s  6.70%  database/sql.(*DB).begin
+         0     0% 96.98%      0.50s  6.57%  database/sql.(*DB).beginDC
+         0     0% 96.98%      0.50s  6.57%  database/sql.(*DB).beginDC.func1
+         0     0% 96.98%      0.04s  0.53%  database/sql.(*DB).conn
+         0     0% 96.98%      0.08s  1.05%  database/sql.(*DB).exec
+         0     0% 96.98%      1.04s 13.67%  database/sql.(*DB).execDC
+         0     0% 96.98%      1.04s 13.67%  database/sql.(*DB).execDC.func2
+         0     0% 96.98%      0.24s  3.15%  database/sql.(*DB).query
+         0     0% 96.98%      1.14s 14.98%  database/sql.(*DB).queryDC
+         0     0% 96.98%      1.14s 14.98%  database/sql.(*DB).queryDC.func1
+         0     0% 96.98%      0.83s 10.91%  database/sql.(*DB).retry
+         0     0% 96.98%      0.23s  3.02%  database/sql.(*Tx).Commit
+         0     0% 96.98%      0.23s  3.02%  database/sql.(*Tx).Commit.func1
+         0     0% 96.98%      0.97s 12.75%  database/sql.(*Tx).ExecContext
+         0     0% 96.98%      0.93s 12.22%  database/sql.(*Tx).QueryContext
+         0     0% 96.98%      0.63s  8.28%  database/sql.(*Tx).QueryRowContext
+         0     0% 96.98%      0.24s  3.15%  database/sql.(*Tx).Rollback (inline)
+         0     0% 96.98%      0.24s  3.15%  database/sql.(*Tx).rollback
+         0     0% 96.98%      0.24s  3.15%  database/sql.(*Tx).rollback.func1
+         0     0% 96.98%      0.50s  6.57%  database/sql.ctxDriverBegin

@@ -1,0 +1,46 @@
+File: double-entry-ledger-baseline
+Type: inuse_space
+Time: 2026-08-17 11:54:45 EDT
+Showing nodes accounting for 13989.45kB, 100% of 13989.45kB total
+Showing top 40 nodes out of 91
+      flat  flat%   sum%        cum   cum%
+ 5254.28kB 37.56% 37.56%  5254.28kB 37.56%  github.com/jackc/pgx/v5/internal/stmtcache.NewLRUCache (inline)
+ 2570.01kB 18.37% 55.93%  2570.01kB 18.37%  bufio.NewReaderSize (inline)
+    1028kB  7.35% 63.28%     1028kB  7.35%  bufio.NewWriterSize
+ 1025.23kB  7.33% 70.61%  1025.23kB  7.33%  runtime.mallocgc
+ 1024.08kB  7.32% 77.93%  1024.08kB  7.32%  github.com/jackc/pgx/v5/pgconn.(*PgConn).Prepare
+  525.43kB  3.76% 81.68%   525.43kB  3.76%  github.com/jackc/pgx/v5/pgtype.(*Map).buildReflectTypeToType (inline)
+  513.69kB  3.67% 85.36%   513.69kB  3.67%  syscall.init.func1
+  512.56kB  3.66% 89.02%   512.56kB  3.66%  github.com/jackc/pgx/v5/pgproto3.NewFrontend
+  512.05kB  3.66% 92.68%   512.05kB  3.66%  context.(*cancelCtx).Done
+  512.05kB  3.66% 96.34%   512.05kB  3.66%  github.com/nats-io/nats%2ego.(*Subscription).Fetch.func3
+  512.05kB  3.66%   100%   512.05kB  3.66%  sync.runtime_notifyListWait
+         0     0%   100%  2570.01kB 18.37%  bufio.NewReader
+         0     0%   100%  1050.86kB  7.51%  database/sql.(*DB).BeginTx
+         0     0%   100%  1050.86kB  7.51%  database/sql.(*DB).BeginTx.func1
+         0     0%   100%   525.43kB  3.76%  database/sql.(*DB).Ping (inline)
+         0     0%   100%   525.43kB  3.76%  database/sql.(*DB).PingContext
+         0     0%   100%   525.43kB  3.76%  database/sql.(*DB).PingContext.func1
+         0     0%   100%  5228.02kB 37.37%  database/sql.(*DB).QueryContext
+         0     0%   100%  5228.02kB 37.37%  database/sql.(*DB).QueryContext.func1
+         0     0%   100%  3677.99kB 26.29%  database/sql.(*DB).QueryRowContext
+         0     0%   100%  1050.86kB  7.51%  database/sql.(*DB).begin
+         0     0%   100%  6292.27kB 44.98%  database/sql.(*DB).conn
+         0     0%   100%   512.05kB  3.66%  database/sql.(*DB).connectionOpener
+         0     0%   100%  5228.02kB 37.37%  database/sql.(*DB).query
+         0     0%   100%  1024.08kB  7.32%  database/sql.(*DB).queryDC
+         0     0%   100%  1024.08kB  7.32%  database/sql.(*DB).queryDC.func1
+         0     0%   100%  6804.31kB 48.64%  database/sql.(*DB).retry
+         0     0%   100%   512.04kB  3.66%  database/sql.(*Tx).QueryContext
+         0     0%   100%   512.04kB  3.66%  database/sql.(*Tx).QueryRowContext (inline)
+         0     0%   100%  1024.08kB  7.32%  database/sql.ctxDriverQuery
+         0     0%   100%  1024.08kB  7.32%  database/sql.withLock
+         0     0%   100%  6790.92kB 48.54%  github.com/go-chi/chi/v5.(*Mux).ServeHTTP
+         0     0%   100%  6790.92kB 48.54%  github.com/go-chi/chi/v5.(*Mux).routeHTTP
+         0     0%   100%   525.43kB  3.76%  github.com/golang-migrate/migrate/v4/database/postgres.WithInstance
+         0     0%   100%  1024.08kB  7.32%  github.com/jackc/pgx/v5.(*Conn).Prepare
+         0     0%   100%  1024.08kB  7.32%  github.com/jackc/pgx/v5.(*Conn).Query
+         0     0%   100%  1024.08kB  7.32%  github.com/jackc/pgx/v5.(*Conn).getStatementDescription
+         0     0%   100%  6292.27kB 44.98%  github.com/jackc/pgx/v5.ConnectConfig
+         0     0%   100%  6292.27kB 44.98%  github.com/jackc/pgx/v5.connect
+         0     0%   100%   512.56kB  3.66%  github.com/jackc/pgx/v5/pgconn.ConnectConfig

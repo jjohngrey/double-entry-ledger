@@ -1,0 +1,46 @@
+File: ledger
+Type: inuse_space
+Time: 2026-08-17 14:33:53 EDT
+Showing nodes accounting for 46425.08kB, 100% of 46425.08kB total
+Showing top 40 nodes out of 107
+      flat  flat%   sum%        cum   cum%
+13867.08kB 29.87% 29.87% 13867.08kB 29.87%  bufio.NewWriterSize
+10276.14kB 22.13% 52.00% 10276.14kB 22.13%  bufio.NewReaderSize (inline)
+ 4643.34kB 10.00% 62.01%  4643.34kB 10.00%  runtime.mallocgc
+ 2627.14kB  5.66% 67.67%  2627.14kB  5.66%  github.com/jackc/pgx/v5/internal/stmtcache.NewLRUCache (inline)
+ 2560.55kB  5.52% 73.18%  2560.55kB  5.52%  net/textproto.readMIMEHeader
+ 1536.30kB  3.31% 76.49%  1536.30kB  3.31%  context.(*cancelCtx).propagateCancel
+ 1184.27kB  2.55% 79.04%  1184.27kB  2.55%  runtime/pprof.StartCPUProfile
+ 1024.14kB  2.21% 81.25%  1024.14kB  2.21%  net/http.(*Server).newConn
+ 1024.14kB  2.21% 83.45%  1024.14kB  2.21%  net/url.parse
+ 1024.12kB  2.21% 85.66%  1024.12kB  2.21%  github.com/jackc/pgx/v5/pgconn.(*PgConn).Prepare
+ 1024.11kB  2.21% 87.86%  1024.11kB  2.21%  database/sql.(*Tx).awaitDone
+  512.56kB  1.10% 88.97%   512.56kB  1.10%  github.com/jackc/pgx/v5/pgproto3.NewFrontend
+  512.50kB  1.10% 90.07%  4164.48kB  8.97%  github.com/jackc/pgx/v5.connect
+  512.28kB  1.10% 91.18%   512.28kB  1.10%  github.com/jackc/pgx/v5/pgconn.(*PgConn).receiveMessage
+  512.16kB  1.10% 92.28%  4096.84kB  8.82%  net/http.readRequest
+  512.05kB  1.10% 93.38%  4676.54kB 10.07%  database/sql.(*DB).conn
+  512.05kB  1.10% 94.49%   512.05kB  1.10%  sync.runtime_notifyListWait
+  512.04kB  1.10% 95.59%  2048.34kB  4.41%  context.withCancel (inline)
+  512.04kB  1.10% 96.69%   512.04kB  1.10%  github.com/jackc/pgx/v5/pgtype.TryWrapDerefPointerEncodePlan
+  512.03kB  1.10% 97.79%   512.03kB  1.10%  github.com/jackc/pgx/v5/internal/stmtcache.StatementName
+  512.02kB  1.10% 98.90%   512.02kB  1.10%  context.WithValue
+  512.01kB  1.10%   100%   512.01kB  1.10%  github.com/go-chi/chi/v5.(*node).FindRoute
+         0     0%   100% 10276.14kB 22.13%  bufio.NewReader
+         0     0%   100%  2048.34kB  4.41%  context.WithCancel
+         0     0%   100%  4676.54kB 10.07%  database/sql.(*DB).BeginTx
+         0     0%   100%  4676.54kB 10.07%  database/sql.(*DB).BeginTx.func1
+         0     0%   100%  4676.54kB 10.07%  database/sql.(*DB).begin
+         0     0%   100%  1024.07kB  2.21%  database/sql.(*DB).execDC
+         0     0%   100%  1024.07kB  2.21%  database/sql.(*DB).execDC.func2
+         0     0%   100%  1024.12kB  2.21%  database/sql.(*DB).queryDC
+         0     0%   100%  1024.12kB  2.21%  database/sql.(*DB).queryDC.func1
+         0     0%   100%  4676.54kB 10.07%  database/sql.(*DB).retry
+         0     0%   100%  1024.07kB  2.21%  database/sql.(*Tx).ExecContext
+         0     0%   100%  1024.12kB  2.21%  database/sql.(*Tx).QueryContext
+         0     0%   100%  1024.12kB  2.21%  database/sql.(*Tx).QueryRowContext (inline)
+         0     0%   100%  1024.07kB  2.21%  database/sql.ctxDriverExec
+         0     0%   100%  1024.12kB  2.21%  database/sql.ctxDriverQuery
+         0     0%   100%  2048.19kB  4.41%  database/sql.withLock
+         0     0%   100%  6724.65kB 14.48%  github.com/go-chi/chi/v5.(*Mux).ServeHTTP
+         0     0%   100%  6724.65kB 14.48%  github.com/go-chi/chi/v5.(*Mux).routeHTTP

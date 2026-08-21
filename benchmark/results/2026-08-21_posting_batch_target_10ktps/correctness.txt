@@ -1,0 +1,23 @@
+Multi-operation posting batch verification — 2026-08-21
+
+DATABASE_URL=postgres://postgres:***@127.0.0.1:5433/ledger_benchmark?sslmode=disable go test ./... -count=1
+PASS
+ok github.com/jjohngrey/double-entry-ledger/internal/http 0.281s
+ok github.com/jjohngrey/double-entry-ledger/internal/ledger 2.102s
+
+DATABASE_URL= go test ./... -count=1
+PASS
+ok github.com/jjohngrey/double-entry-ledger/internal/http 0.370s
+ok github.com/jjohngrey/double-entry-ledger/internal/ledger 0.611s
+
+go vet ./...
+PASS
+
+node --check benchmark/k6/ledger.js
+PASS
+
+bash -n benchmark/scripts/run.sh benchmark/scripts/capture-environment.sh benchmark/scripts/capture-profiles.sh benchmark/scripts/capture-database-state.sh
+PASS
+
+git diff --check
+PASS

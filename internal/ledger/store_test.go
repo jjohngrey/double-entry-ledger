@@ -182,7 +182,7 @@ func TestCreateTransaction_Unbalanced(t *testing.T) {
 
 func TestGetAccountEntries(t *testing.T) {
 	s := NewMemoryStore()
-	
+
 	// Create account and transactions
 	acc, _ := s.CreateAccount("Cash", AssetType)
 	other, _ := s.CreateAccount("Revenue", RevenueType)
@@ -210,7 +210,7 @@ func TestGetAccountEntries(t *testing.T) {
 
 func TestGetAccountEntries_FromAndTo(t *testing.T) {
 	s := NewMemoryStore()
-	
+
 	// Create account and transactions
 	acc, _ := s.CreateAccount("Cash", AssetType)
 	other, _ := s.CreateAccount("Revenue", RevenueType)
@@ -254,7 +254,7 @@ func TestGetAccountEntries_FromAndTo(t *testing.T) {
 	}
 
 	response3, err3 := s.GetAccountEntries(acc.ID, GetAccountEntriesParams{
-		To:   now.Add(time.Hour),
+		To: now.Add(time.Hour),
 	})
 	if err3 != nil {
 		t.Fatalf("Unexpected error getting account entries with from/to: %v", err3)

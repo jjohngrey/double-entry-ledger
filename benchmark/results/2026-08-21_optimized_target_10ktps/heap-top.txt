@@ -1,0 +1,46 @@
+File: ledger
+Type: inuse_space
+Time: 2026-08-21 10:07:23 EDT
+Showing nodes accounting for 51.24MB, 100% of 51.24MB total
+Showing top 40 nodes out of 141
+      flat  flat%   sum%        cum   cum%
+   19.06MB 37.20% 37.20%    19.06MB 37.20%  bufio.NewWriterSize (inline)
+    7.18MB 14.02% 51.22%     7.18MB 14.02%  github.com/jackc/pgx/v5/internal/stmtcache.NewLRUCache (inline)
+    7.03MB 13.72% 64.94%     7.03MB 13.72%  bufio.NewReaderSize (inline)
+    3.50MB  6.84% 71.78%     3.50MB  6.84%  runtime.mallocgc
+    1.16MB  2.26% 74.04%     1.16MB  2.26%  runtime/pprof.StartCPUProfile
+       1MB  1.96% 75.99%        1MB  1.96%  github.com/jackc/pgx/v5/pgconn.(*PgConn).Prepare
+       1MB  1.95% 77.94%        2MB  3.90%  net/http.readRequest
+       1MB  1.95% 79.90%        1MB  1.95%  github.com/go-chi/chi/v5.NewRouteContext
+       1MB  1.95% 81.85%        1MB  1.95%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*completionWaiters).subscribe
+       1MB  1.95% 83.80%        1MB  1.95%  math/big.NewInt
+    0.79MB  1.54% 85.34%     0.79MB  1.54%  github.com/nats-io/nats%2ego.(*js).PullSubscribe
+    0.50MB  0.98% 86.33%     0.50MB  0.98%  github.com/jackc/pgx/v5/internal/iobufpool.init.0.func1
+    0.50MB  0.98% 87.31%     0.50MB  0.98%  io.init.func1
+    0.50MB  0.98% 88.29%     0.50MB  0.98%  strings.(*Builder).Write
+    0.50MB  0.98% 89.26%     0.50MB  0.98%  time.goFunc
+    0.50MB  0.98% 90.24%     0.50MB  0.98%  github.com/jackc/pgx/v5/pgtype.(*Map).planEncodeDepth
+    0.50MB  0.98% 91.22%     9.01MB 17.59%  net/http.(*conn).readRequest
+    0.50MB  0.98% 92.19%     0.50MB  0.98%  net/http.(*Server).newConn
+    0.50MB  0.98% 93.17%     0.50MB  0.98%  context.(*cancelCtx).Done
+    0.50MB  0.98% 94.14%     9.19MB 17.93%  database/sql.(*DB).conn
+    0.50MB  0.98% 95.12%     8.19MB 15.98%  github.com/jackc/pgx/v5.connect
+    0.50MB  0.98% 96.10%     0.50MB  0.98%  reflect.growslice
+    0.50MB  0.98% 97.07%     8.69MB 16.96%  github.com/jackc/pgx/v5/stdlib.(*driverConnector).Connect
+    0.50MB  0.98% 98.05%     0.50MB  0.98%  net.sockaddrToTCP
+    0.50MB  0.98% 99.02%     0.50MB  0.98%  net/textproto.(*Reader).ReadLine (inline)
+    0.50MB  0.98%   100%     0.50MB  0.98%  net/textproto.readMIMEHeader
+         0     0%   100%     0.50MB  0.98%  bufio.(*Writer).Flush
+         0     0%   100%     7.03MB 13.72%  bufio.NewReader
+         0     0%   100%     5.62MB 10.97%  database/sql.(*DB).BeginTx
+         0     0%   100%     5.62MB 10.97%  database/sql.(*DB).BeginTx.func1
+         0     0%   100%     4.07MB  7.94%  database/sql.(*DB).ExecContext
+         0     0%   100%     4.07MB  7.94%  database/sql.(*DB).ExecContext.func1
+         0     0%   100%     5.62MB 10.97%  database/sql.(*DB).begin
+         0     0%   100%     0.50MB  0.98%  database/sql.(*DB).connectionOpener
+         0     0%   100%     4.07MB  7.94%  database/sql.(*DB).exec
+         0     0%   100%     1.50MB  2.93%  database/sql.(*DB).execDC
+         0     0%   100%     1.50MB  2.93%  database/sql.(*DB).execDC.func2
+         0     0%   100%     9.69MB 18.91%  database/sql.(*DB).retry
+         0     0%   100%        1MB  1.96%  database/sql.(*Tx).ExecContext
+         0     0%   100%     1.50MB  2.93%  database/sql.ctxDriverExec

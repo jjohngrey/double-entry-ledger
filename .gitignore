@@ -1,1 +1,9 @@
 .env
+/ledger
+__pycache__/
+*.pyc
+
+# Local benchmark scratch data. Timestamped evidence under benchmark/results is
+# intentionally tracked.
+benchmark/data.json
+benchmark/current-results

@@ -1,0 +1,1 @@
+{"stage":2,"label":"faster-completion-observation","predecessor":"2026-08-17_m2pro_tuned_100tps","change_under_test":"5ms asynchronous completion polling interval","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

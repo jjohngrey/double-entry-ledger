@@ -1,0 +1,48 @@
+File: ledger
+Type: cpu
+Time: 2026-08-21 10:21:30 EDT
+Duration: 10.12s, Total samples = 10.88s (107.48%)
+Showing nodes accounting for 9.83s, 90.35% of 10.88s total
+Dropped 361 nodes (cum <= 0.05s)
+Showing top 40 nodes out of 243
+      flat  flat%   sum%        cum   cum%
+     5.81s 53.40% 53.40%      5.81s 53.40%  syscall.rawsyscalln
+     1.36s 12.50% 65.90%      1.36s 12.50%  runtime.kevent
+     0.79s  7.26% 73.16%      0.79s  7.26%  runtime.pthread_cond_wait
+     0.52s  4.78% 77.94%      0.52s  4.78%  runtime.pthread_cond_signal
+     0.25s  2.30% 80.24%      0.25s  2.30%  runtime.usleep
+     0.23s  2.11% 82.35%      0.24s  2.21%  runtime.tryDeferToSpanScan
+     0.16s  1.47% 83.82%      0.16s  1.47%  runtime.memclrNoHeapPointers
+     0.11s  1.01% 84.83%      0.11s  1.01%  runtime.memmove
+     0.08s  0.74% 85.57%      0.08s  0.74%  runtime.madvise
+     0.06s  0.55% 86.12%      0.06s  0.55%  runtime.nanotime1
+     0.05s  0.46% 86.58%      0.12s  1.10%  runtime.(*unwinder).resolveInternal
+     0.05s  0.46% 87.04%      0.44s  4.04%  runtime.mallocgc
+     0.05s  0.46% 87.50%      0.14s  1.29%  runtime.mallocgcSmallScanNoHeader
+     0.05s  0.46% 87.96%      0.06s  0.55%  runtime.stackpoolalloc
+     0.03s  0.28% 88.24%      0.08s  0.74%  runtime.pcvalue
+     0.02s  0.18% 88.42%      0.06s  0.55%  crypto/internal/fips140/pbkdf2.Key[go.shape.interface { BlockSize int; Reset; Size int; Sum []uint8; Write  }]
+     0.02s  0.18% 88.60%      0.10s  0.92%  fmt.(*pp).doPrintf
+     0.02s  0.18% 88.79%      0.08s  0.74%  runtime.scanblock
+     0.01s 0.092% 88.88%      2.33s 21.42%  database/sql.(*DB).retry
+     0.01s 0.092% 88.97%      0.17s  1.56%  database/sql.(*Tx).Commit
+     0.01s 0.092% 89.06%      0.09s  0.83%  encoding/json.(*decodeState).object
+     0.01s 0.092% 89.15%      0.06s  0.55%  encoding/json.structEncoder.encode
+     0.01s 0.092% 89.25%      0.08s  0.74%  fmt.(*pp).printArg
+     0.01s 0.092% 89.34%      0.14s  1.29%  fmt.errorf
+     0.01s 0.092% 89.43%      0.49s  4.50%  github.com/jackc/pgx/v5.(*ExtendedQueryBuilder).Build
+     0.01s 0.092% 89.52%      0.13s  1.19%  github.com/jackc/pgx/v5/pgtype.(*Map).planEncodeDepth
+     0.01s 0.092% 89.61%      0.57s  5.24%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).CreateTransactionsBatch
+     0.01s 0.092% 89.71%      1.65s 15.17%  internal/poll.(*FD).Read
+     0.01s 0.092% 89.80%      0.06s  0.55%  runtime.(*sweepLocked).sweep
+     0.01s 0.092% 89.89%      0.08s  0.74%  runtime.(*timer).modify
+     0.01s 0.092% 89.98%      0.47s  4.32%  runtime.goexit0
+     0.01s 0.092% 90.07%      0.07s  0.64%  runtime.newstack
+     0.01s 0.092% 90.17%      0.18s  1.65%  runtime.scanObjectsSmall
+     0.01s 0.092% 90.26%      0.19s  1.75%  runtime.stealWork
+     0.01s 0.092% 90.35%      0.41s  3.77%  runtime.wakep
+         0     0% 90.35%      0.23s  2.11%  bufio.(*Reader).Peek
+         0     0% 90.35%      0.26s  2.39%  bufio.(*Reader).fill
+         0     0% 90.35%      1.11s 10.20%  bufio.(*Writer).Flush
+         0     0% 90.35%      0.06s  0.55%  crypto/pbkdf2.Key[go.shape.interface { BlockSize int; Reset; Size int; Sum []uint8; Write  }]
+         0     0% 90.35%      0.22s  2.02%  database/sql.(*DB).BeginTx

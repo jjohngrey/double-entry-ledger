@@ -1,0 +1,140 @@
+ANALYZE
+ANALYZE
+EXPLAIN (ANALYZE,BUFFERS,WAL,SETTINGS) SELECT id,account_id,transaction_id,credit,debit,created_at FROM entries WHERE transaction_id=(SELECT transaction_id FROM idempotency_keys WHERE key LIKE 'benchmark-duplicate-%' LIMIT 1)
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
+ Gather  (cost=1000.03..4928.82 rows=2 width=63) (actual time=0.523..22.637 rows=2 loops=1)
+   Workers Planned: 1
+   Params Evaluated: $0
+   Workers Launched: 1
+   Buffers: shared read=2398
+   InitPlan 1 (returns $0)
+     ->  Limit  (cost=0.00..0.03 rows=1 width=16) (actual time=0.010..0.011 rows=1 loops=1)
+           Buffers: shared read=1
+           ->  Seq Scan on idempotency_keys  (cost=0.00..17.40 rows=512 width=16) (actual time=0.010..0.010 rows=1 loops=1)
+                 Filter: (key ~~ 'benchmark-duplicate-%'::text)
+                 Buffers: shared read=1
+   ->  Parallel Seq Scan on entries  (cost=0.00..3928.59 rows=1 width=63) (actual time=8.557..18.725 rows=1 loops=2)
+         Filter: (transaction_id = $0)
+         Rows Removed by Filter: 104147
+         Buffers: shared read=2397
+ Planning:
+   Buffers: shared hit=47 read=6
+ Planning Time: 1.063 ms
+ Execution Time: 22.714 ms
+(19 rows)
+
+EXPLAIN (ANALYZE,BUFFERS,WAL,SETTINGS) SELECT id,account_id,transaction_id,credit,debit,created_at FROM entries WHERE account_id=(SELECT id FROM accounts WHERE name='bench-history-debit') AND created_at >= NOW()-INTERVAL '1 year' AND created_at <= NOW() ORDER BY created_at ASC
+                                                           QUERY PLAN                                                            
+---------------------------------------------------------------------------------------------------------------------------------
+ Gather Merge  (cost=6657.38..6670.15 rows=111 width=63) (actual time=27.281..46.035 rows=100000 loops=1)
+   Workers Planned: 1
+   Params Evaluated: $0
+   Workers Launched: 1
+   Buffers: shared hit=2466 read=91, temp read=907 written=909
+   InitPlan 1 (returns $0)
+     ->  Seq Scan on accounts  (cost=0.00..193.43 rows=1 width=16) (actual time=0.870..1.074 rows=1 loops=1)
+           Filter: (name = 'bench-history-debit'::text)
+           Rows Removed by Filter: 5633
+           Buffers: shared hit=32 read=91
+   ->  Sort  (cost=5463.95..5464.22 rows=111 width=63) (actual time=24.849..29.284 rows=50000 loops=2)
+         Sort Key: entries.created_at
+         Sort Method: external merge  Disk: 4056kB
+         Buffers: shared hit=2434, temp read=907 written=909
+         Worker 0:  Sort Method: external merge  Disk: 3200kB
+         ->  Parallel Seq Scan on entries  (cost=0.00..5460.18 rows=111 width=63) (actual time=0.081..14.693 rows=50000 loops=2)
+               Filter: ((account_id = $0) AND (created_at <= now()) AND (created_at >= (now() - '1 year'::interval)))
+               Rows Removed by Filter: 54148
+               Buffers: shared hit=2397
+ Planning:
+   Buffers: shared hit=33 read=3
+ Planning Time: 0.647 ms
+ Execution Time: 50.643 ms
+(23 rows)
+
+EXPLAIN (ANALYZE,BUFFERS,WAL,SETTINGS) SELECT id,source_ledger_id,source_account_id,destination_ledger_id,destination_account_id,amount,status,created_at,updated_at FROM sagas WHERE id::text=(SELECT id::text FROM sagas LIMIT 1) OR idempotency_key=(SELECT idempotency_key FROM sagas LIMIT 1)
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Seq Scan on sagas  (cost=0.11..22.57 rows=3 width=111) (actual time=0.013..0.187 rows=1 loops=1)
+   Filter: (((id)::text = $0) OR (idempotency_key = $1))
+   Rows Removed by Filter: 372
+   Buffers: shared hit=2 read=15
+   InitPlan 1 (returns $0)
+     ->  Limit  (cost=0.00..0.06 rows=1 width=32) (actual time=0.002..0.002 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Seq Scan on sagas sagas_1  (cost=0.00..20.59 rows=373 width=32) (actual time=0.001..0.001 rows=1 loops=1)
+                 Buffers: shared hit=1
+   InitPlan 2 (returns $1)
+     ->  Limit  (cost=0.00..0.05 rows=1 width=61) (actual time=0.001..0.001 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Seq Scan on sagas sagas_2  (cost=0.00..18.73 rows=373 width=61) (actual time=0.001..0.001 rows=1 loops=1)
+                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=54 read=2
+ Planning Time: 0.680 ms
+ Execution Time: 0.200 ms
+(18 rows)
+
+BEGIN; INSERT INTO transactions (ledger_id) VALUES ('00000000-0000-0000-0000-000000000000') RETURNING id AS plan_fixture \gset
+INSERT INTO outbox_events (transaction_id,event_type,status,available_at) VALUES (:'plan_fixture','transaction_posted','pending',NOW())
+EXPLAIN (ANALYZE,BUFFERS,WAL,SETTINGS) SELECT o.id,t.id,t.ledger_id,t.created_at FROM outbox_events o JOIN transactions t ON t.id=o.transaction_id WHERE o.status='pending' AND o.event_type='transaction_posted' AND o.available_at <= NOW() ORDER BY o.created_at FOR UPDATE OF o SKIP LOCKED LIMIT 1
+                                                                            QUERY PLAN                                                                            
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=14.51..14.53 rows=1 width=76) (actual time=2.454..2.455 rows=0 loops=1)
+   Buffers: shared read=23
+   ->  LockRows  (cost=14.51..14.53 rows=1 width=76) (actual time=2.453..2.454 rows=0 loops=1)
+         Buffers: shared read=23
+         ->  Sort  (cost=14.51..14.52 rows=1 width=76) (actual time=2.452..2.453 rows=0 loops=1)
+               Sort Key: o.created_at
+               Sort Method: quicksort  Memory: 25kB
+               Buffers: shared read=23
+               ->  Nested Loop  (cost=0.71..14.50 rows=1 width=76) (actual time=2.449..2.449 rows=0 loops=1)
+                     Buffers: shared read=23
+                     ->  Index Scan using outbox_events_ready_idx on outbox_events o  (cost=0.29..6.07 rows=1 width=46) (actual time=2.448..2.448 rows=0 loops=1)
+                           Index Cond: ((status = 'pending'::text) AND (available_at <= now()))
+                           Filter: (event_type = 'transaction_posted'::text)
+                           Buffers: shared read=23
+                     ->  Index Scan using transactions_pkey on transactions t  (cost=0.42..8.44 rows=1 width=46) (never executed)
+                           Index Cond: (id = o.transaction_id)
+ Planning:
+   Buffers: shared hit=136 read=11
+ Planning Time: 2.461 ms
+ Execution Time: 2.519 ms
+(20 rows)
+
+ROLLBACK
+ROLLBACK
+BEGIN
+BEGIN
+WITH fixture AS (INSERT INTO transactions (ledger_id) VALUES ('00000000-0000-0000-0000-000000000000') RETURNING id) INSERT INTO outbox_events (transaction_id,event_type,status,available_at) SELECT id,'transaction_posted','pending',NOW() FROM fixture
+INSERT 0 1
+EXPLAIN (ANALYZE,BUFFERS,WAL,SETTINGS) SELECT o.id,t.id,t.ledger_id,t.created_at FROM outbox_events o JOIN transactions t ON t.id=o.transaction_id WHERE o.status='pending' AND o.event_type='transaction_posted' AND o.available_at <= NOW() ORDER BY o.created_at FOR UPDATE OF o SKIP LOCKED LIMIT 1
+                                                                            QUERY PLAN                                                                            
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=14.51..14.53 rows=1 width=76) (actual time=0.087..0.088 rows=1 loops=1)
+   Buffers: shared hit=32
+   WAL: records=1 bytes=54
+   ->  LockRows  (cost=14.51..14.53 rows=1 width=76) (actual time=0.086..0.087 rows=1 loops=1)
+         Buffers: shared hit=32
+         WAL: records=1 bytes=54
+         ->  Sort  (cost=14.51..14.52 rows=1 width=76) (actual time=0.082..0.082 rows=1 loops=1)
+               Sort Key: o.created_at
+               Sort Method: quicksort  Memory: 25kB
+               Buffers: shared hit=31
+               ->  Nested Loop  (cost=0.71..14.50 rows=1 width=76) (actual time=0.065..0.065 rows=1 loops=1)
+                     Buffers: shared hit=28
+                     ->  Index Scan using outbox_events_ready_idx on outbox_events o  (cost=0.29..6.07 rows=1 width=46) (actual time=0.046..0.046 rows=1 loops=1)
+                           Index Cond: ((status = 'pending'::text) AND (available_at <= now()))
+                           Filter: (event_type = 'transaction_posted'::text)
+                           Buffers: shared hit=24
+                     ->  Index Scan using transactions_pkey on transactions t  (cost=0.42..8.44 rows=1 width=46) (actual time=0.017..0.017 rows=1 loops=1)
+                           Index Cond: (id = o.transaction_id)
+                           Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=169
+ Planning Time: 0.374 ms
+ Execution Time: 0.117 ms
+(23 rows)
+
+ROLLBACK
+ROLLBACK

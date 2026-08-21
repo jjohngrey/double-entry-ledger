@@ -1,0 +1,1 @@
+{"stage":3,"label":"read-committed-row-locking","predecessor":"2026-08-17_m2pro_tuned_100tps_5ms_poll","change_under_test":"deterministic account locks with READ COMMITTED foreground posting","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

@@ -1,0 +1,1 @@
+{"stage":1,"label":"batched-writes-indexes-and-pool","predecessor":"2026-08-17_m2pro_baseline","change_under_test":"per-transaction batched writes, hot-path indexes, configured pool, and continuous worker drains","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

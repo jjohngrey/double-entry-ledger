@@ -1,0 +1,48 @@
+File: ledger
+Type: cpu
+Time: 2026-08-21 10:07:13 EDT
+Duration: 10.11s, Total samples = 8.72s (86.24%)
+Showing nodes accounting for 8.05s, 92.32% of 8.72s total
+Dropped 313 nodes (cum <= 0.04s)
+Showing top 40 nodes out of 202
+      flat  flat%   sum%        cum   cum%
+     4.71s 54.01% 54.01%      4.71s 54.01%  syscall.rawsyscalln
+     1.23s 14.11% 68.12%      1.23s 14.11%  runtime.kevent
+     0.77s  8.83% 76.95%      0.77s  8.83%  runtime.pthread_cond_wait
+     0.54s  6.19% 83.14%      0.54s  6.19%  runtime.pthread_cond_signal
+     0.20s  2.29% 85.44%      0.20s  2.29%  runtime.usleep
+     0.10s  1.15% 86.58%      0.11s  1.26%  runtime.(*unwinder).resolveInternal
+     0.09s  1.03% 87.61%      0.09s  1.03%  runtime.memclrNoHeapPointers
+     0.09s  1.03% 88.65%      0.10s  1.15%  runtime.tryDeferToSpanScan
+     0.06s  0.69% 89.33%      0.06s  0.69%  runtime.madvise
+     0.06s  0.69% 90.02%      0.06s  0.69%  runtime.memmove
+     0.03s  0.34% 90.37%      0.05s  0.57%  fmt.(*pp).doPrintf
+     0.02s  0.23% 90.60%      0.05s  0.57%  net/http.(*chunkWriter).writeHeader
+     0.02s  0.23% 90.83%      0.19s  2.18%  runtime.mallocgc
+     0.02s  0.23% 91.06%      0.79s  9.06%  runtime.semasleep
+     0.02s  0.23% 91.28%      0.17s  1.95%  runtime.stealWork
+     0.01s  0.11% 91.40%      1.03s 11.81%  database/sql.(*DB).execDC.func2
+     0.01s  0.11% 91.51%      0.97s 11.12%  database/sql.(*Tx).ExecContext
+     0.01s  0.11% 91.63%      0.48s  5.50%  github.com/jackc/pgx/v5.(*Conn).BeginTx
+     0.01s  0.11% 91.74%      0.19s  2.18%  github.com/jackc/pgx/v5.(*ExtendedQueryBuilder).Build
+     0.01s  0.11% 91.86%      1.05s 12.04%  github.com/jackc/pgx/v5/pgproto3.(*chunkReader).Next
+     0.01s  0.11% 91.97%      0.15s  1.72%  github.com/jackc/pgx/v5/pgtype.(*encodePlanDriverValuer).Encode
+     0.01s  0.11% 92.09%      0.06s  0.69%  runtime.(*mcache).nextFree
+     0.01s  0.11% 92.20%      0.05s  0.57%  runtime.(*mcache).refill
+     0.01s  0.11% 92.32%      1.20s 13.76%  runtime.netpoll
+         0     0% 92.32%      0.11s  1.26%  bufio.(*Reader).Peek
+         0     0% 92.32%      0.13s  1.49%  bufio.(*Reader).fill
+         0     0% 92.32%      0.80s  9.17%  bufio.(*Writer).Flush
+         0     0% 92.32%      0.55s  6.31%  database/sql.(*DB).BeginTx
+         0     0% 92.32%      0.55s  6.31%  database/sql.(*DB).BeginTx.func1
+         0     0% 92.32%      0.07s   0.8%  database/sql.(*DB).ExecContext
+         0     0% 92.32%      0.07s   0.8%  database/sql.(*DB).ExecContext.func1
+         0     0% 92.32%      0.74s  8.49%  database/sql.(*DB).QueryContext
+         0     0% 92.32%      0.74s  8.49%  database/sql.(*DB).QueryContext.func1
+         0     0% 92.32%      0.17s  1.95%  database/sql.(*DB).QueryRowContext
+         0     0% 92.32%      0.55s  6.31%  database/sql.(*DB).begin
+         0     0% 92.32%      0.49s  5.62%  database/sql.(*DB).beginDC
+         0     0% 92.32%      0.48s  5.50%  database/sql.(*DB).beginDC.func1
+         0     0% 92.32%      0.06s  0.69%  database/sql.(*DB).conn
+         0     0% 92.32%      0.07s   0.8%  database/sql.(*DB).exec
+         0     0% 92.32%      1.03s 11.81%  database/sql.(*DB).execDC

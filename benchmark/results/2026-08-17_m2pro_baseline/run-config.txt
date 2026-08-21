@@ -1,0 +1,21 @@
+Baseline run captured before the reusable runner was added.
+
+Machine and container allocation matched the exact target environment recorded
+in ../2026-08-17_m2pro_target_10ktps/environment.txt.
+
+Offered logical operations/s: 100
+Mix: normal 50%, duplicate 20%, transfer 15%, aggregate 15%
+Warm-up: 10s plus 2s settle
+Measurement: 30s
+Transfer completion polling: true
+Projection/transfer poll interval: 50ms
+Account pairs per scenario: 512
+Historical transactions: 100000
+Pool: 64 open / 64 idle / 30m lifetime / 5m idle expiry
+Request logging: false
+Profiles: 30s CPU during load; heap after load
+k6: grafana/k6:0.54.0
+
+This code state predates batched posting, migration 000006, read-committed
+background/foreground row locking, continuous worker drain, and indexed saga
+lookup. k6-summary.json and k6-samples.json.gz are the raw result artifacts.

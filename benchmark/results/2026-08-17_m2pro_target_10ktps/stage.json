@@ -1,0 +1,1 @@
+{"stage":5,"label":"corrected-10k-target","predecessor":"2026-08-17_m2pro_corrected_100tps","change_under_test":"corrected harness at the 10k ticket target","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

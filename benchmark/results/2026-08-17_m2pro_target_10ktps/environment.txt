@@ -1,0 +1,86 @@
+captured_utc=2026-08-17T18:33:15Z
+uname=Darwin 25.5.0 arm64
+os_ProductName:		macOS
+os_ProductVersion:		26.5.2
+os_BuildVersion:		25F84
+cpu=Apple M2 Pro
+host_logical_cpu=10
+host_memory_bytes=17179869184
+go=go version go1.26.2 darwin/arm64
+make=GNU Make 3.81
+k6_image=grafana/k6:0.54.0@sha256:1f40432b1cbe7234e977f96c362c9bc550a2d2b583d014dd8669fe40d3e9e755
+k6_image_id=sha256:1f40432b1cbe7234e977f96c362c9bc550a2d2b583d014dd8669fe40d3e9e755 k6_repo_digests=grafana/k6@sha256:1f40432b1cbe7234e977f96c362c9bc550a2d2b583d014dd8669fe40d3e9e755
+docker=29.7.2/29.7.2
+docker_compose=Docker Compose version v5.4.0
+docker_cpus=10 docker_memory_bytes=8214851584 docker_arch=aarch64
+postgres_image=postgres:16.13@sha256:71e27bf60b70bded003791b5573f8b808365613f341df20ffcf0c1ed7bc13ddf postgres_image_id=sha256:71e27bf60b70bded003791b5573f8b808365613f341df20ffcf0c1ed7bc13ddf
+nats_image=nats:2.11.17-alpine@sha256:e4bf19f15fd3218814a4e3c9e0064e1334bd8aa20d5984b9f1a0afd084f8cc00 nats_image_id=sha256:e4bf19f15fd3218814a4e3c9e0064e1334bd8aa20d5984b9f1a0afd084f8cc00
+database_host=127.0.0.1:5433
+database_name=ledger_benchmark
+db_max_open_conns=64
+db_max_idle_conns=64
+db_conn_max_lifetime=30m
+db_conn_max_idle_time=5m
+http_request_log=false
+worker_batch_size=100
+worker_idle_delay=10ms
+target_tps=10000
+warmup_tps=100
+warmup_duration=5s
+warmup_graceful_stop=20s
+warmup_settle_duration=2s
+measurement_duration=10s
+measurement_graceful_stop=20s
+pre_allocated_vus=256
+max_vus=512
+transfer_completion_poll=true
+poll_interval_seconds=0.005
+dataset_account_pairs=512
+dataset_history_transactions=100000
+dataset_accounts=5634
+dataset_transactions=101024
+dataset_entries=202048
+dataset_database_bytes=98722319
+git_head=unborn
+
+[postgres_version]
+PostgreSQL 16.13 (Debian 16.13-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
+[postgres_settings]
+           name           | setting | unit |       source       
+--------------------------+---------+------+--------------------
+ checkpoint_timeout       | 300     | s    | default
+ effective_cache_size     | 524288  | 8kB  | default
+ effective_io_concurrency | 1       |      | default
+ jit                      | on      |      | default
+ maintenance_work_mem     | 65536   | kB   | default
+ max_connections          | 100     |      | configuration file
+ max_wal_size             | 1024    | MB   | configuration file
+ random_page_cost         | 4       |      | default
+ shared_buffers           | 16384   | 8kB  | configuration file
+ synchronous_commit       | on      |      | default
+ wal_level                | replica |      | default
+ work_mem                 | 4096    | kB   | default
+(12 rows)
+
+
+[dataset_sizes]
+     database     |  bytes   
+------------------+----------
+ ledger_benchmark | 98884631
+(1 row)
+
+         relname          | n_live_tup |  bytes   
+--------------------------+------------+----------
+ accounts                 |       5634 |  1613824
+ daily_account_aggregates |          0 |     8192
+ daily_ledger_aggregates  |          0 |     8192
+ entries                  |     202048 | 49078272
+ idempotency_keys         |        512 |   163840
+ outbox_events            |     101024 | 27361280
+ processed_events         |          0 |    16384
+ saga_steps               |          0 |    24576
+ sagas                    |          0 |    24576
+ schema_migrations        |          1 |    24576
+ transactions             |     101024 | 12115968
+(11 rows)

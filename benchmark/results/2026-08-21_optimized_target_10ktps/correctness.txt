@@ -1,0 +1,32 @@
+Captured: 2026-08-21 America/Toronto
+
+Command:
+  DATABASE_URL=postgres://...@127.0.0.1:5433/ledger_benchmark?sslmode=disable go test ./... -count=1
+Result:
+  ok github.com/jjohngrey/double-entry-ledger/internal/http 0.309s
+  ok github.com/jjohngrey/double-entry-ledger/internal/ledger 1.758s
+  cmd/benchmark-seed, cmd/ledger, and internal/db: no test files
+
+Command:
+  DATABASE_URL= go test ./... -count=1
+Result:
+  all packages passed
+
+Command:
+  go vet ./...
+Result:
+  passed
+
+Command:
+  node --check benchmark/k6/ledger.js
+Result:
+  passed
+
+Command:
+  bash -n benchmark/scripts/run.sh benchmark/scripts/capture-environment.sh
+Result:
+  passed
+
+Focused PostgreSQL regressions:
+  TestAggregateBatchAppliesEachEventExactlyOnce: PASS
+  TestConcurrentBatchPublishersClaimEachEventOnce: PASS

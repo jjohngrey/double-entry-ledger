@@ -1,0 +1,1 @@
+{"stage":7,"label":"optimized-10k-target","predecessor":"2026-08-21_source_transfer_batch_1000tps","change_under_test":"retained publisher, aggregate, posting, transfer, completion, and pool optimizations at 10k","pre_run_steps":"../../RUN_STAGES.md#retained-lineage","record_origin":"reconstructed-from-committed-evidence"}

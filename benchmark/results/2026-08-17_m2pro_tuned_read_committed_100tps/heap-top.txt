@@ -1,0 +1,46 @@
+File: ledger
+Type: inuse_space
+Time: 2026-08-17 14:13:39 EDT
+Showing nodes accounting for 5165.79kB, 100% of 5165.79kB total
+Showing top 40 nodes out of 58
+      flat  flat%   sum%        cum   cum%
+ 1576.28kB 30.51% 30.51%  1576.28kB 30.51%  github.com/jackc/pgx/v5/internal/stmtcache.NewLRUCache (inline)
+ 1025.23kB 19.85% 50.36%  1025.23kB 19.85%  runtime.mallocgc
+  516.01kB  9.99% 60.35%   516.01kB  9.99%  github.com/jackc/pgx/v5/internal/iobufpool.init.0.func1
+  512.12kB  9.91% 70.26%   512.12kB  9.91%  net/http.ListenAndServe (inline)
+  512.05kB  9.91% 80.18%   512.05kB  9.91%  context.(*cancelCtx).Done
+  512.05kB  9.91% 90.09%   512.05kB  9.91%  sync.runtime_notifyListWait
+  512.02kB  9.91%   100%   512.02kB  9.91%  github.com/jackc/pgx/v5/pgconn.ParseConfigWithOptions
+         0     0%   100%  1050.86kB 20.34%  database/sql.(*DB).BeginTx
+         0     0%   100%  1050.86kB 20.34%  database/sql.(*DB).BeginTx.func1
+         0     0%   100%  1553.46kB 30.07%  database/sql.(*DB).QueryContext
+         0     0%   100%  1553.46kB 30.07%  database/sql.(*DB).QueryContext.func1
+         0     0%   100%  1050.86kB 20.34%  database/sql.(*DB).begin
+         0     0%   100%  2604.32kB 50.41%  database/sql.(*DB).conn
+         0     0%   100%   512.05kB  9.91%  database/sql.(*DB).connectionOpener
+         0     0%   100%  1553.46kB 30.07%  database/sql.(*DB).query
+         0     0%   100%  2604.32kB 50.41%  database/sql.(*DB).retry
+         0     0%   100%  2604.32kB 50.41%  github.com/go-chi/chi/v5.(*Mux).ServeHTTP
+         0     0%   100%  2604.32kB 50.41%  github.com/go-chi/chi/v5.(*Mux).routeHTTP
+         0     0%   100%  2092.29kB 40.50%  github.com/jackc/pgx/v5.ConnectConfig
+         0     0%   100%   512.02kB  9.91%  github.com/jackc/pgx/v5.ParseConfig (inline)
+         0     0%   100%   512.02kB  9.91%  github.com/jackc/pgx/v5.ParseConfigWithOptions
+         0     0%   100%  2092.29kB 40.50%  github.com/jackc/pgx/v5.connect
+         0     0%   100%   516.01kB  9.99%  github.com/jackc/pgx/v5/internal/iobufpool.Get
+         0     0%   100%   516.01kB  9.99%  github.com/jackc/pgx/v5/pgconn.ConnectConfig
+         0     0%   100%   516.01kB  9.99%  github.com/jackc/pgx/v5/pgconn.ParseConfigWithOptions.func1
+         0     0%   100%   516.01kB  9.99%  github.com/jackc/pgx/v5/pgconn.connectOne
+         0     0%   100%   516.01kB  9.99%  github.com/jackc/pgx/v5/pgconn.connectPreferred
+         0     0%   100%   516.01kB  9.99%  github.com/jackc/pgx/v5/pgproto3.NewFrontend
+         0     0%   100%   516.01kB  9.99%  github.com/jackc/pgx/v5/pgproto3.newChunkReader (inline)
+         0     0%   100%  2604.32kB 50.41%  github.com/jackc/pgx/v5/stdlib.(*driverConnector).Connect
+         0     0%   100%  1050.86kB 20.34%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).CreateTransaction
+         0     0%   100%  1553.46kB 30.07%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).GetAccountDailyAggregates
+         0     0%   100%  1050.86kB 20.34%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).createTransactionAttempt
+         0     0%   100%  1553.46kB 30.07%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).getDailyAggregates
+         0     0%   100%   512.05kB  9.91%  github.com/nats-io/nats%2ego.(*Conn).waitForMsgs
+         0     0%   100%   512.12kB  9.91%  main.main
+         0     0%   100%  1050.86kB 20.34%  main.main.CreateTransactionHandler.func10
+         0     0%   100%  1553.46kB 30.07%  main.main.GetAccountAggregatesHandler.func7
+         0     0%   100%  2604.32kB 50.41%  net/http.(*conn).serve
+         0     0%   100%  2604.32kB 50.41%  net/http.HandlerFunc.ServeHTTP
