@@ -1,0 +1,48 @@
+File: ledger
+Type: cpu
+Time: 2026-08-26 21:42:21 PDT
+Duration: 10.13s, Total samples = 9.12s (90.05%)
+Showing nodes accounting for 8.09s, 88.71% of 9.12s total
+Dropped 374 nodes (cum <= 0.05s)
+Showing top 40 nodes out of 229
+      flat  flat%   sum%        cum   cum%
+     4.24s 46.49% 46.49%      4.24s 46.49%  syscall.rawsyscalln
+     1.14s 12.50% 58.99%      1.14s 12.50%  runtime.kevent
+     0.73s  8.00% 67.00%      0.73s  8.00%  runtime.pthread_cond_wait
+     0.66s  7.24% 74.23%      0.66s  7.24%  runtime.pthread_cond_signal
+     0.28s  3.07% 77.30%      0.28s  3.07%  runtime.usleep
+     0.22s  2.41% 79.71%      0.22s  2.41%  runtime.memclrNoHeapPointers
+     0.13s  1.43% 81.14%      0.13s  1.43%  runtime.madvise
+     0.11s  1.21% 82.35%      0.12s  1.32%  runtime.tryDeferToSpanScan
+     0.09s  0.99% 83.33%      0.09s  0.99%  runtime.memmove
+     0.08s  0.88% 84.21%      0.08s  0.88%  runtime.stackpoolalloc
+     0.07s  0.77% 84.98%      0.10s  1.10%  runtime.(*unwinder).resolveInternal
+     0.06s  0.66% 85.64%      0.14s  1.54%  runtime.scanObjectsSmall
+     0.05s  0.55% 86.18%      0.15s  1.64%  runtime.mallocgcSmallNoscan
+     0.05s  0.55% 86.73%      0.07s  0.77%  runtime.pcvalue
+     0.03s  0.33% 87.06%      0.09s  0.99%  runtime.scanObject
+     0.02s  0.22% 87.28%      0.13s  1.43%  fmt.errorf
+     0.02s  0.22% 87.50%      0.19s  2.08%  github.com/jackc/pgx/v5/pgtype.(*Map).planEncodeDepth
+     0.02s  0.22% 87.72%      0.07s  0.77%  github.com/jackc/pgx/v5/pgtype.(*encodePlanArrayCodecBinary).Encode
+     0.02s  0.22% 87.94%      0.11s  1.21%  runtime.scanblock
+     0.01s  0.11% 88.05%      1.96s 21.49%  github.com/jackc/pgx/v5.(*Conn).Query
+     0.01s  0.11% 88.16%      0.15s  1.64%  github.com/jackc/pgx/v5/pgtype.(*Map).planEncode
+     0.01s  0.11% 88.27%      0.06s  0.66%  net/http.(*chunkWriter).writeHeader
+     0.01s  0.11% 88.38%      0.05s  0.55%  runtime.(*stkframe).getStackMap
+     0.01s  0.11% 88.49%      2.04s 22.37%  runtime.findRunnable
+     0.01s  0.11% 88.60%      0.41s  4.50%  runtime.mallocgc
+     0.01s  0.11% 88.71%      0.05s  0.55%  runtime.slicebytetostring
+         0     0% 88.71%      0.21s  2.30%  bufio.(*Reader).Peek
+         0     0% 88.71%      0.21s  2.30%  bufio.(*Reader).fill
+         0     0% 88.71%      1.10s 12.06%  bufio.(*Writer).Flush
+         0     0% 88.71%      0.19s  2.08%  database/sql.(*DB).BeginTx
+         0     0% 88.71%      0.19s  2.08%  database/sql.(*DB).BeginTx.func1
+         0     0% 88.71%      0.13s  1.43%  database/sql.(*DB).ExecContext
+         0     0% 88.71%      0.13s  1.43%  database/sql.(*DB).ExecContext.func1
+         0     0% 88.71%      1.53s 16.78%  database/sql.(*DB).QueryContext
+         0     0% 88.71%      1.53s 16.78%  database/sql.(*DB).QueryContext.func1
+         0     0% 88.71%      0.89s  9.76%  database/sql.(*DB).QueryRowContext
+         0     0% 88.71%      0.19s  2.08%  database/sql.(*DB).begin
+         0     0% 88.71%      0.18s  1.97%  database/sql.(*DB).beginDC
+         0     0% 88.71%      0.18s  1.97%  database/sql.(*DB).beginDC.func1
+         0     0% 88.71%      0.09s  0.99%  database/sql.(*DB).conn

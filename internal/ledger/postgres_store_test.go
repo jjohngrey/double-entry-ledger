@@ -21,6 +21,20 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+func TestPostgresStoreWithDatabaseSharesCompletionWaiters(t *testing.T) {
+	primaryDB := &sql.DB{}
+	workerDB := &sql.DB{}
+	primary := NewPostgresStore(primaryDB)
+	worker := primary.WithDatabase(workerDB)
+
+	if worker.db != workerDB {
+		t.Fatal("worker store did not use dedicated database pool")
+	}
+	if worker.projectionWaiters != primary.projectionWaiters || worker.transferWaiters != primary.transferWaiters {
+		t.Fatal("worker store did not share completion waiters")
+	}
+}
+
 func TestPostgresStore_CreateTransaction_RetriesSerializationFailures(t *testing.T) {
 	var calls int
 	store := &PostgresStore{

@@ -41,6 +41,11 @@ Every run follows this preparation sequence unless its row notes a difference:
 | 14 | `2026-08-21_transfer_batch_async_publish_target_1x8_10ktps` | stage 13 | Test the publisher midpoint; eight publishers underfed projection and reduced total yield. |
 | 15 | `2026-08-21_transfer_batch_async_publish_1000tps` | stage 13 | Validate the selected one-transfer/16-publisher default at sustainable 1k load. |
 | 16 | `2026-08-21_transfer_batch_async_publish_selected_target_10ktps` | stage 15 | Profile the exact selected default at 10k and record correctness plus the remaining shared-pool bottleneck. |
+| 17 | `2026-08-26_stage11_posting_workers8_exploratory` | stage 16 | Test eight posting batch writers; added contention reduced total yield. |
+| 18 | `2026-08-26_stage11_dedicated_pools_exploratory` | stage 16 | Partition the fixed 90-session budget as foreground/transfer/publisher/aggregate = 70/2/14/4. |
+| 19 | `2026-08-26_stage11_dedicated_pools_80_1_5_4_exploratory` | stage 18 | Give foreground 80 sessions; publisher and transfer starvation reduced yield. |
+| 20 | `2026-08-26_stage11_dedicated_pools_posting_batch64_exploratory` | stage 18 | Raise the normal posting micro-batch from 32 to 64; best unprofiled repeat. |
+| 21 | `2026-08-26_dedicated_pools_batch64_selected_target_10ktps` | stage 20 | Profile the selected 70/2/14/4 partition and 64-operation posting batch, and record the no-material-gain verdict. |
 
 The table lists every committed result directory. Failed development attempts
 are excluded; valid worker sweeps remain committed so the selected defaults and

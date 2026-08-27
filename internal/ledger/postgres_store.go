@@ -58,6 +58,20 @@ func NewPostgresStore(sqlDB *sql.DB) *PostgresStore {
 	}
 }
 
+// WithDatabase creates a store for a dedicated connection pool while sharing
+// the in-process completion notifications used by foreground long polls. The
+// database remains authoritative; sharing only avoids an unnecessary final
+// status read after a background worker commits.
+func (s *PostgresStore) WithDatabase(sqlDB *sql.DB) *PostgresStore {
+	return &PostgresStore{
+		db:                sqlDB,
+		txOptions:         s.txOptions,
+		sleep:             s.sleep,
+		projectionWaiters: s.projectionWaiters,
+		transferWaiters:   s.transferWaiters,
+	}
+}
+
 var _ Store = (*PostgresStore)(nil)
 
 func (s *PostgresStore) CreateAccount(name string, accType AccountType) (*Account, error) {

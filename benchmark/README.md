@@ -91,6 +91,9 @@ Key variables and defaults:
 | `BENCHMARK_HISTORY_TRANSACTIONS` | `100000` | Historical dataset size |
 | `DB_MAX_OPEN_CONNS` | `90` | Go pool open cap (leaves PostgreSQL headroom) |
 | `DB_MAX_IDLE_CONNS` | `90` | Go pool idle cap |
+| `DB_TRANSFER_POOL_CONNS` | `2` | Sessions reserved for transfer completion |
+| `DB_PUBLISHER_POOL_CONNS` | `14` | Sessions reserved for outbox publication |
+| `DB_AGGREGATE_POOL_CONNS` | `4` | Sessions reserved for aggregate projection; remaining 70 serve foreground work |
 | `DB_CONN_MAX_LIFETIME` | `30m` | Connection lifetime |
 | `DB_CONN_MAX_IDLE_TIME` | `5m` | Idle expiry |
 | `WORKER_BATCH_SIZE` | `100` | Outbox drain limit per pass |
@@ -100,7 +103,7 @@ Key variables and defaults:
 | `PUBLISH_ASYNC_MAX_PENDING` | `256` | Bounded JetStream publish acknowledgements in flight |
 | `AGGREGATE_WORKERS` | `4` | Concurrent durable aggregate consumers |
 | `AGGREGATE_FETCH_BATCH` | `64` | JetStream messages requested per aggregate fetch |
-| `POSTING_BATCH_SIZE` | `32` | Maximum non-idempotent posts per shared commit |
+| `POSTING_BATCH_SIZE` | `64` | Maximum non-idempotent posts per shared commit |
 | `POSTING_BATCH_WAIT` | `500us` | Maximum time used to form a posting micro-batch |
 | `POSTING_BATCH_WORKERS` | `4` | Concurrent posting batch writers |
 | `BENCHMARK_STAGE` | `unlabeled` | Prospective label written before load starts |
@@ -177,3 +180,7 @@ benchmark/scripts/summarize-k6.py path/to/k6-samples.json.gz \
   1,000.4/s at 63.62 ms p99; target repeats improve transfer fairness and tail
   latency but do not exceed stage 9's total yield. The selected profiled
   target's `REPORT.md` documents every retained sweep and the tradeoff.
+- `2026-08-26_*dedicated_pools*`: fixed-budget pool and posting-batch sweeps.
+  The best unprofiled repeat is 3,658.1/s; the selected profiled repeat is
+  3,018.0/s, effectively unchanged from stage 10. Its `REPORT.md` records the
+  negative experiments and the remaining foreground PostgreSQL bottleneck.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
@@ -34,10 +35,17 @@ func main() {
 		os.Exit(1)
 	}
 	defer sqlDB.Close()
-	if err := configureDBPool(sqlDB); err != nil {
+	poolConfig, err := loadDBPoolConfig()
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "configure db pool: %v\n", err)
 		os.Exit(1)
 	}
+	dedicatedConfig, err := loadDedicatedPoolConfig(poolConfig.maxOpen)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure dedicated db pools: %v\n", err)
+		os.Exit(1)
+	}
+	configureDBPool(sqlDB, dedicatedConfig.foreground, poolConfig)
 
 	if err := runMigrations(sqlDB); err != nil {
 		fmt.Fprintf(os.Stderr, "migrations: %v\n", err)
@@ -45,7 +53,35 @@ func main() {
 	}
 
 	store := ledger.NewPostgresStore(sqlDB)
-	postingBatchSize, err := positiveEnvInt("POSTING_BATCH_SIZE", 32)
+	transferWorkerStore, publisherStore, aggregateStore := store, store, store
+	diagnosticPools := map[string]*sql.DB{"foreground": sqlDB}
+	if dedicatedConfig.enabled() {
+		transferDB, err := openDedicatedDB(dsn, dedicatedConfig.transfer, poolConfig)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "open transfer db pool: %v\n", err)
+			os.Exit(1)
+		}
+		defer transferDB.Close()
+		publisherDB, err := openDedicatedDB(dsn, dedicatedConfig.publisher, poolConfig)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "open publisher db pool: %v\n", err)
+			os.Exit(1)
+		}
+		defer publisherDB.Close()
+		aggregateDB, err := openDedicatedDB(dsn, dedicatedConfig.aggregate, poolConfig)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "open aggregate db pool: %v\n", err)
+			os.Exit(1)
+		}
+		defer aggregateDB.Close()
+		transferWorkerStore = store.WithDatabase(transferDB)
+		publisherStore = store.WithDatabase(publisherDB)
+		aggregateStore = store.WithDatabase(aggregateDB)
+		diagnosticPools["transfer"] = transferDB
+		diagnosticPools["publisher"] = publisherDB
+		diagnosticPools["aggregate"] = aggregateDB
+	}
+	postingBatchSize, err := positiveEnvInt("POSTING_BATCH_SIZE", 64)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "configure posting batch size: %v\n", err)
 		os.Exit(1)
@@ -113,19 +149,19 @@ func main() {
 	}
 	for i := 0; i < transferWorkers; i++ {
 		startBackgroundWorker(fmt.Sprintf("transfer recovery worker %d", i+1), workerIdleDelay, func() (int, error) {
-			return store.ProcessOutbox(workerBatch)
+			return transferWorkerStore.ProcessOutbox(workerBatch)
 		})
 	}
 	startBackgroundWorker("transfer compensation worker", 100*time.Millisecond, func() (int, error) {
-		return store.ProcessCompensationOutbox(workerBatch)
+		return transferWorkerStore.ProcessCompensationOutbox(workerBatch)
 	})
 	for i := 0; i < publisherWorkers; i++ {
 		startBackgroundWorker(fmt.Sprintf("transaction event publisher %d", i+1), workerIdleDelay, func() (int, error) {
-			return store.PublishCommittedEvents(context.Background(), publisher, workerBatch)
+			return publisherStore.PublishCommittedEvents(context.Background(), publisher, workerBatch)
 		})
 	}
 	go func() {
-		if err := ledger.RunAggregateConsumerConcurrent(context.Background(), publisher.JetStream(), store, aggregateWorkers, aggregateFetchBatch); err != nil {
+		if err := ledger.RunAggregateConsumerConcurrent(context.Background(), publisher.JetStream(), aggregateStore, aggregateWorkers, aggregateFetchBatch); err != nil {
 			fmt.Fprintf(os.Stderr, "aggregate consumer: %v\n", err)
 		}
 	}()
@@ -156,7 +192,7 @@ func main() {
 	r.Get("/transfers/{transfer_id}", httphandlers.GetTransferHandler(store))
 
 	if pprofAddr := os.Getenv("PPROF_ADDR"); pprofAddr != "" {
-		go serveDiagnostics(pprofAddr, sqlDB)
+		go serveDiagnostics(pprofAddr, diagnosticPools)
 	}
 
 	httpAddr := os.Getenv("HTTP_ADDR")
@@ -169,29 +205,88 @@ func main() {
 	}
 }
 
-func configureDBPool(sqlDB *sql.DB) error {
+type dbPoolConfig struct {
+	maxOpen     int
+	maxIdle     int
+	maxLifetime time.Duration
+	maxIdleTime time.Duration
+}
+
+type dedicatedPoolConfig struct {
+	foreground int
+	transfer   int
+	publisher  int
+	aggregate  int
+}
+
+func (c dedicatedPoolConfig) enabled() bool {
+	return c.transfer+c.publisher+c.aggregate > 0
+}
+
+func loadDBPoolConfig() (dbPoolConfig, error) {
 	maxOpen, err := envInt("DB_MAX_OPEN_CONNS", 0)
 	if err != nil {
-		return err
+		return dbPoolConfig{}, err
 	}
 	maxIdle, err := envInt("DB_MAX_IDLE_CONNS", 2)
 	if err != nil {
-		return err
+		return dbPoolConfig{}, err
 	}
 	maxLifetime, err := envDuration("DB_CONN_MAX_LIFETIME", 0)
 	if err != nil {
-		return err
+		return dbPoolConfig{}, err
 	}
 	maxIdleTime, err := envDuration("DB_CONN_MAX_IDLE_TIME", 0)
 	if err != nil {
-		return err
+		return dbPoolConfig{}, err
 	}
+	return dbPoolConfig{maxOpen: maxOpen, maxIdle: maxIdle, maxLifetime: maxLifetime, maxIdleTime: maxIdleTime}, nil
+}
 
+func loadDedicatedPoolConfig(total int) (dedicatedPoolConfig, error) {
+	transfer, err := envInt("DB_TRANSFER_POOL_CONNS", 0)
+	if err != nil {
+		return dedicatedPoolConfig{}, err
+	}
+	publisher, err := envInt("DB_PUBLISHER_POOL_CONNS", 0)
+	if err != nil {
+		return dedicatedPoolConfig{}, err
+	}
+	aggregate, err := envInt("DB_AGGREGATE_POOL_CONNS", 0)
+	if err != nil {
+		return dedicatedPoolConfig{}, err
+	}
+	background := transfer + publisher + aggregate
+	if background == 0 {
+		return dedicatedPoolConfig{foreground: total}, nil
+	}
+	if transfer == 0 || publisher == 0 || aggregate == 0 {
+		return dedicatedPoolConfig{}, errors.New("dedicated transfer, publisher, and aggregate pools must all be positive")
+	}
+	if total == 0 || background >= total {
+		return dedicatedPoolConfig{}, fmt.Errorf("dedicated pools require a finite DB_MAX_OPEN_CONNS greater than their %d-connection sum", background)
+	}
+	return dedicatedPoolConfig{foreground: total - background, transfer: transfer, publisher: publisher, aggregate: aggregate}, nil
+}
+
+func configureDBPool(sqlDB *sql.DB, maxOpen int, config dbPoolConfig) {
+	maxIdle := min(config.maxIdle, maxOpen)
+	if maxOpen == 0 {
+		maxIdle = config.maxIdle
+	}
 	sqlDB.SetMaxOpenConns(maxOpen)
 	sqlDB.SetMaxIdleConns(maxIdle)
-	sqlDB.SetConnMaxLifetime(maxLifetime)
-	sqlDB.SetConnMaxIdleTime(maxIdleTime)
-	return nil
+	sqlDB.SetConnMaxLifetime(config.maxLifetime)
+	sqlDB.SetConnMaxIdleTime(config.maxIdleTime)
+}
+
+func openDedicatedDB(dsn string, maxOpen int, config dbPoolConfig) (*sql.DB, error) {
+	sqlDB, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return nil, err
+	}
+	configureDBPool(sqlDB, maxOpen, config)
+	return sqlDB, nil
 }
 
 func envInt(name string, fallback int) (int, error) {
@@ -241,7 +336,12 @@ func envBool(name string, fallback bool) (bool, error) {
 	return value, nil
 }
 
-func serveDiagnostics(addr string, sqlDB *sql.DB) {
+type diagnosticDBStats struct {
+	sql.DBStats
+	Pools map[string]sql.DBStats `json:"Pools"`
+}
+
+func serveDiagnostics(addr string, sqlDBs map[string]*sql.DB) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
@@ -253,7 +353,21 @@ func serveDiagnostics(addr string, sqlDB *sql.DB) {
 	}
 	mux.HandleFunc("/debug/db-stats", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(sqlDB.Stats()); err != nil {
+		stats := diagnosticDBStats{Pools: make(map[string]sql.DBStats, len(sqlDBs))}
+		for name, sqlDB := range sqlDBs {
+			poolStats := sqlDB.Stats()
+			stats.Pools[name] = poolStats
+			stats.MaxOpenConnections += poolStats.MaxOpenConnections
+			stats.OpenConnections += poolStats.OpenConnections
+			stats.InUse += poolStats.InUse
+			stats.Idle += poolStats.Idle
+			stats.WaitCount += poolStats.WaitCount
+			stats.WaitDuration += poolStats.WaitDuration
+			stats.MaxIdleClosed += poolStats.MaxIdleClosed
+			stats.MaxIdleTimeClosed += poolStats.MaxIdleTimeClosed
+			stats.MaxLifetimeClosed += poolStats.MaxLifetimeClosed
+		}
+		if err := json.NewEncoder(w).Encode(stats); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})

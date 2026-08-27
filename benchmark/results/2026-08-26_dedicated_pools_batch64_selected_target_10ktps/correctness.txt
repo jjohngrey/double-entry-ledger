@@ -1,0 +1,7 @@
+PASS: DATABASE_URL=postgres://.../ledger_benchmark go test ./... -count=1
+  cmd/ledger: ok
+  internal/http: ok
+  internal/ledger: ok
+PASS: go vet ./...
+PASS: bash -n benchmark/scripts/run.sh benchmark/scripts/capture-environment.sh
+PASS: git diff --check

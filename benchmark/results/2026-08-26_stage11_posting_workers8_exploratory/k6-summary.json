@@ -1,0 +1,430 @@
+{
+    "metrics": {
+        "ledger_error_rate{phase:measure,operation:idempotent_duplicate_posting}": {
+            "passes": 0,
+            "fails": 13706,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_reqs": {
+            "count": 30152,
+            "rate": 1113.694074270923
+        },
+        "checks": {
+            "passes": 80215,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_waiting": {
+            "p(50)": 230.698,
+            "p(90)": 1158.6157132,
+            "p(95)": 1848.25534505,
+            "p(99)": 3320.607327829998,
+            "max": 4579.453378,
+            "avg": 461.36219241546206,
+            "min": 1.004375
+        },
+        "ledger_logical_operations{phase:measure,operation:aggregate_event_ingestion}": {
+            "count": 1438,
+            "rate": 53.11395856996508,
+            "thresholds": {
+                "count>=15000": true
+            }
+        },
+        "http_req_sending": {
+            "p(99)": 114.56404799999977,
+            "max": 550.665625,
+            "avg": 3.916859792418446,
+            "min": 0.002375,
+            "p(50)": 0.010875,
+            "p(90)": 1.7235375000000013,
+            "p(95)": 12.178231549999913
+        },
+        "ledger_logical_operations{phase:measure,operation:idempotent_duplicate_posting}": {
+            "rate": 506.2447261195698,
+            "count": 13706,
+            "thresholds": {
+                "count>=20000": true
+            }
+        },
+        "ledger_transfer_completion_lag_ms": {
+            "min": 283,
+            "p(50)": 1556,
+            "p(90)": 2200,
+            "p(95)": 2310,
+            "p(99)": 2506,
+            "max": 2964,
+            "avg": 1547.7921469740634
+        },
+        "vus": {
+            "max": 1887,
+            "value": 1045,
+            "min": 0
+        },
+        "dropped_iterations{scenario:normal_balanced_posting}": {
+            "count": 42772,
+            "rate": 1579.826311512202,
+            "thresholds": {
+                "count==0": true
+            }
+        },
+        "dropped_iterations{scenario:aggregate_event_ingestion}": {
+            "count": 13507,
+            "rate": 498.89446342456074,
+            "thresholds": {
+                "count==0": true
+            }
+        },
+        "vus_max": {
+            "value": 1985,
+            "min": 1024,
+            "max": 1985
+        },
+        "ledger_error_rate": {
+            "passes": 0,
+            "fails": 25287,
+            "value": 0
+        },
+        "data_sent": {
+            "count": 10550917,
+            "rate": 389708.6011217943
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(50)": 235.0076455,
+            "p(90)": 1178.7594635000003,
+            "p(95)": 1862.05140915,
+            "p(99)": 3321.8155610099984,
+            "max": 4579.48946,
+            "avg": 467.65355878210147,
+            "min": 1.043292
+        },
+        "ledger_projection_lag_ms": {
+            "p(90)": 4542,
+            "p(95)": 4728.3,
+            "p(99)": 4818.26,
+            "max": 4875,
+            "avg": 3206.135605006954,
+            "min": 949,
+            "p(50)": 3054
+        },
+        "ledger_logical_operations": {
+            "count": 25287,
+            "rate": 934.0004661743442
+        },
+        "ledger_projection_error_rate": {
+            "passes": 0,
+            "fails": 1438,
+            "value": 0
+        },
+        "iterations": {
+            "count": 25788,
+            "rate": 952.5053988889148
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 30152,
+            "value": 0
+        },
+        "ledger_operation_latency_ms{phase:measure}": {
+            "p(95)": 2454,
+            "p(99)": 4146.959999999997,
+            "max": 4937,
+            "avg": 576.6944275155976,
+            "min": 1.043292,
+            "p(50)": 240.175333,
+            "p(90)": 1767.4000000000005,
+            "thresholds": {
+                "p(99)<50": true
+            }
+        },
+        "dropped_iterations{scenario:idempotent_duplicate_posting}": {
+            "count": 7444,
+            "rate": 274.9515351841586,
+            "thresholds": {
+                "count==0": true
+            }
+        },
+        "ledger_error_rate{phase:measure,operation:cross_ledger_transfer}": {
+            "passes": 0,
+            "fails": 2776,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "data_received": {
+            "count": 17239577,
+            "rate": 636760.9030192788
+        },
+        "ledger_logical_operations{phase:measure,operation:cross_ledger_transfer}": {
+            "rate": 102.5343177957045,
+            "count": 2776,
+            "thresholds": {
+                "count>=15000": true
+            }
+        },
+        "http_req_connecting": {
+            "p(99)": 107.71417932999992,
+            "max": 514.196125,
+            "avg": 3.4835708959272993,
+            "min": 0,
+            "p(50)": 0,
+            "p(90)": 0,
+            "p(95)": 11.112872949999995
+        },
+        "ledger_operation_latency_ms{phase:measure,operation:cross_ledger_transfer}": {
+            "p(50)": 1591,
+            "p(90)": 2248.5,
+            "p(95)": 2340,
+            "p(99)": 2544.9999999999995,
+            "max": 3152,
+            "avg": 1572.354106628242,
+            "min": 283,
+            "thresholds": {
+                "p(99)<50": true
+            }
+        },
+        "ledger_operation_latency_ms{phase:measure,operation:idempotent_duplicate_posting}": {
+            "max": 1337.308626,
+            "avg": 141.84902585327646,
+            "min": 1.043292,
+            "p(50)": 94.9552295,
+            "p(90)": 317.81183350000003,
+            "p(95)": 420.9190939999999,
+            "p(99)": 719.24056525,
+            "thresholds": {
+                "p(99)<50": true
+            }
+        },
+        "ledger_error_rate{phase:measure}": {
+            "passes": 0,
+            "fails": 25287,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "iteration_duration": {
+            "p(95)": 2477.194357249999,
+            "p(99)": 4166.779777169999,
+            "max": 5061.024003,
+            "avg": 628.1115857492292,
+            "min": 2.010916,
+            "p(50)": 307.309667,
+            "p(90)": 1763.7869714
+        },
+        "http_req_tls_handshaking": {
+            "max": 0,
+            "avg": 0,
+            "min": 0,
+            "p(50)": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0
+        },
+        "ledger_transfer_completion_error_rate": {
+            "passes": 0,
+            "fails": 2776,
+            "value": 0
+        },
+        "ledger_operation_latency_ms": {
+            "p(50)": 240.175333,
+            "p(90)": 1767.4000000000005,
+            "p(95)": 2454,
+            "p(99)": 4146.959999999997,
+            "max": 4937,
+            "avg": 576.6944275155976,
+            "min": 1.043292
+        },
+        "http_req_blocked": {
+            "p(90)": 0.016167,
+            "p(95)": 12.39543534999996,
+            "p(99)": 156.01215534,
+            "max": 693.316126,
+            "avg": 5.811349101453008,
+            "min": 0.00075,
+            "p(50)": 0.002833
+        },
+        "http_req_receiving": {
+            "avg": 2.374506574223944,
+            "min": 0.005125,
+            "p(50)": 0.0229585,
+            "p(90)": 0.27973330000000013,
+            "p(95)": 1.594145799999997,
+            "p(99)": 88.11147691999999,
+            "max": 295.950666
+        },
+        "ledger_operation_latency_ms{phase:measure,operation:aggregate_event_ingestion}": {
+            "p(95)": 4740,
+            "p(99)": 4844,
+            "max": 4937,
+            "avg": 3227.02016689847,
+            "min": 949,
+            "p(50)": 3079.5,
+            "p(90)": 4542,
+            "thresholds": {
+                "p(99)<50": true
+            }
+        },
+        "ledger_error_rate{phase:measure,operation:normal_balanced_posting}": {
+            "passes": 0,
+            "fails": 7367,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration": {
+            "p(99)": 3321.8155610099984,
+            "max": 4579.48946,
+            "avg": 467.65355878210147,
+            "min": 1.043292,
+            "p(50)": 235.0076455,
+            "p(90)": 1178.7594635000003,
+            "p(95)": 1862.05140915
+        },
+        "dropped_iterations": {
+            "rate": 2836.0933204702355,
+            "count": 76784
+        },
+        "ledger_error_rate{phase:measure,operation:aggregate_event_ingestion}": {
+            "passes": 0,
+            "fails": 1438,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "ledger_operation_latency_ms{phase:measure,operation:normal_balanced_posting}": {
+            "p(90)": 867.3411420000001,
+            "p(95)": 963.4171089999999,
+            "p(99)": 1432.167149,
+            "max": 2186.785001,
+            "avg": 493.1965848027692,
+            "min": 43.567542,
+            "p(50)": 443.277459,
+            "thresholds": {
+                "p(99)<50": true
+            }
+        },
+        "ledger_logical_operations{phase:measure,operation:normal_balanced_posting}": {
+            "rate": 272.10746368910486,
+            "count": 7367,
+            "thresholds": {
+                "count>=50000": true
+            }
+        },
+        "ledger_successful_logical_operations": {
+            "count": 25287,
+            "rate": 934.0004661743442
+        },
+        "dropped_iterations{scenario:cross_ledger_transfer}": {
+            "count": 13061,
+            "rate": 482.42101034931426,
+            "thresholds": {
+                "count==0": true
+            }
+        }
+    },
+    "root_group": {
+        "groups": {},
+        "checks": {
+                "duplicate posting returns 200": {
+                    "name": "duplicate posting returns 200",
+                    "path": "::duplicate posting returns 200",
+                    "id": "7e1151603d562121f59d2a9241499bb3",
+                    "passes": 13806,
+                    "fails": 0
+                },
+                "duplicate posting returns the seeded transaction": {
+                    "id": "6550edf340b85bcf3c7a0fc3de01ffb7",
+                    "passes": 13806,
+                    "fails": 0,
+                    "name": "duplicate posting returns the seeded transaction",
+                    "path": "::duplicate posting returns the seeded transaction"
+                },
+                "duplicate posting response is balanced": {
+                    "path": "::duplicate posting response is balanced",
+                    "id": "d2da7ad789dc22c96ee042f9897f7d44",
+                    "passes": 13806,
+                    "fails": 0,
+                    "name": "duplicate posting response is balanced"
+                },
+                "normal posting returns 201": {
+                    "name": "normal posting returns 201",
+                    "path": "::normal posting returns 201",
+                    "id": "3b7b71369e16d28228c1c7d330cda0da",
+                    "passes": 7618,
+                    "fails": 0
+                },
+                "normal posting returns a transaction": {
+                    "passes": 7618,
+                    "fails": 0,
+                    "name": "normal posting returns a transaction",
+                    "path": "::normal posting returns a transaction",
+                    "id": "d6033e70d92c67d75359982d4db57232"
+                },
+                "normal posting response is balanced": {
+                    "id": "9e23f5ee6da955884e6f92211ed61bd0",
+                    "passes": 7618,
+                    "fails": 0,
+                    "name": "normal posting response is balanced",
+                    "path": "::normal posting response is balanced"
+                },
+                "aggregate source posting returns 201": {
+                    "id": "81cb32007874a1aa5876e3da7722c46e",
+                    "passes": 1513,
+                    "fails": 0,
+                    "name": "aggregate source posting returns 201",
+                    "path": "::aggregate source posting returns 201"
+                },
+                "aggregate source returns a transaction": {
+                    "passes": 1513,
+                    "fails": 0,
+                    "name": "aggregate source returns a transaction",
+                    "path": "::aggregate source returns a transaction",
+                    "id": "756c2f1d0155c0521920f20336f14bb6"
+                },
+                "aggregate source response is balanced": {
+                    "path": "::aggregate source response is balanced",
+                    "id": "a23a41da337d7ca429bc67766cc132cc",
+                    "passes": 1513,
+                    "fails": 0,
+                    "name": "aggregate source response is balanced"
+                },
+                "transfer enqueue returns 202": {
+                    "passes": 2851,
+                    "fails": 0,
+                    "name": "transfer enqueue returns 202",
+                    "path": "::transfer enqueue returns 202",
+                    "id": "3bce5d38bd07b5562b770d084e57983e"
+                },
+                "transfer enqueue returns an id": {
+                    "id": "b8acdf9856c9dffd203fea17fcf57be1",
+                    "passes": 2851,
+                    "fails": 0,
+                    "name": "transfer enqueue returns an id",
+                    "path": "::transfer enqueue returns an id"
+                },
+                "transfer enqueue is pending": {
+                    "name": "transfer enqueue is pending",
+                    "path": "::transfer enqueue is pending",
+                    "id": "28abc94600dbfad13396c037fc9575bd",
+                    "passes": 2851,
+                    "fails": 0
+                },
+                "transfer response preserves boundaries": {
+                    "passes": 2851,
+                    "fails": 0,
+                    "name": "transfer response preserves boundaries",
+                    "path": "::transfer response preserves boundaries",
+                    "id": "6d8d3734bf421e3a8faace5ae3d7c597"
+                }
+            },
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+}

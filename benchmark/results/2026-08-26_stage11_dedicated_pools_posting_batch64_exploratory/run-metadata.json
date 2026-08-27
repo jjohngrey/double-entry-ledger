@@ -1,0 +1,20 @@
+{
+  "captured_before_load": true,
+  "captured_utc": "2026-08-27T04:40:15.544862+00:00",
+  "change_under_test": "increase foreground posting batch from 32 to 64 under 70/2/14/4 pool partition",
+  "objective": "amortize transaction and WAL commit cost at 10k offered operations/s",
+  "pre_run_steps": [
+    "start the digest-pinned isolated PostgreSQL and NATS services and wait for health",
+    "refuse to run if another HTTP service is already listening on the benchmark address",
+    "migrate and destructively reseed only the dedicated ledger_benchmark database",
+    "reset the dedicated JetStream stream",
+    "build the ledger binary from the current working tree",
+    "capture the exact environment, dataset, pool, worker, rate, duration, and VU configuration",
+    "run the excluded warm-up, allow it to drain, then wait the configured settle period",
+    "capture measurement metrics and optional CPU/heap profiles",
+    "capture final pool statistics, database state, query plans, raw k6 samples, and summaries"
+  ],
+  "predecessor": "2026-08-26_stage11_dedicated_pools_exploratory",
+  "schema_version": 1,
+  "stage": "stage 11 exploratory: dedicated budgets and posting batch 64"
+}

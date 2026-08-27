@@ -1,5 +1,13 @@
 # Benchmark report — 2026-08-17
 
+> **Fixed-budget pool update (2026-08-26):** Workload-specific connection
+> budgets prevent transfer and projection drains from consuming foreground
+> sessions, and posting batches increase from 32 to 64. The best unprofiled
+> repeat reaches 3,658.1/s, but the profiled repeat is 3,018.0/s—effectively
+> unchanged from stage 10—and p99 is 2.38s. The 10k / 50ms gate still fails.
+> See
+> [`results/2026-08-26_dedicated_pools_batch64_selected_target_10ktps/REPORT.md`](results/2026-08-26_dedicated_pools_batch64_selected_target_10ktps/REPORT.md).
+
 > **Transfer batch / async publication update (2026-08-21):** Stage 10 batches
 > destination completion across sagas and overlaps bounded JetStream publish
 > acknowledgements. The selected 1/16 control sustains 1,000.4/s with zero
