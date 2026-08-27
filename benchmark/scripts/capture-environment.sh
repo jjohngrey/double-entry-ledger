@@ -5,6 +5,7 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 OUTPUT=${1:-"$REPO_ROOT/benchmark/environment.txt"}
 BENCHMARK_DATABASE_URL=${BENCHMARK_DATABASE_URL:-postgres://postgres:postgres@127.0.0.1:5433/ledger_benchmark?sslmode=disable}
+BENCHMARK_PROJECTION_DATABASE_URL=${BENCHMARK_PROJECTION_DATABASE_URL:-}
 DATA_FILE=${BENCHMARK_DATA_FILE:-"$REPO_ROOT/benchmark/data.json"}
 K6_IMAGE=${K6_IMAGE:-grafana/k6:0.54.0@sha256:1f40432b1cbe7234e977f96c362c9bc550a2d2b583d014dd8669fe40d3e9e755}
 
@@ -37,6 +38,10 @@ mkdir -p "$(dirname -- "$OUTPUT")"
   fi
   echo "database_host=127.0.0.1:5433"
   echo "database_name=ledger_benchmark"
+  if [ -n "$BENCHMARK_PROJECTION_DATABASE_URL" ]; then
+    echo "projection_database_host=127.0.0.1:5434"
+    echo "projection_database_name=ledger_projection_benchmark"
+  fi
   echo "db_max_open_conns=${DB_MAX_OPEN_CONNS:-90}"
   echo "db_max_idle_conns=${DB_MAX_IDLE_CONNS:-90}"
   echo "db_transfer_pool_conns=${DB_TRANSFER_POOL_CONNS:-0}"
@@ -44,6 +49,7 @@ mkdir -p "$(dirname -- "$OUTPUT")"
   echo "db_aggregate_pool_conns=${DB_AGGREGATE_POOL_CONNS:-0}"
   echo "db_conn_max_lifetime=${DB_CONN_MAX_LIFETIME:-30m}"
   echo "db_conn_max_idle_time=${DB_CONN_MAX_IDLE_TIME:-5m}"
+  echo "projection_db_max_open_conns=${PROJECTION_DB_MAX_OPEN_CONNS:-20}"
   echo "http_request_log=${HTTP_REQUEST_LOG:-false}"
   echo "worker_batch_size=${WORKER_BATCH_SIZE:-100}"
   echo "worker_idle_delay=${WORKER_IDLE_DELAY:-10ms}"

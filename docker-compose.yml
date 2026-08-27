@@ -33,6 +33,25 @@ services:
     volumes:
       - postgres_benchmark_data:/var/lib/postgresql/data
 
+  # Projection state is intentionally isolated from transactional benchmark
+  # writes. It uses a distinct database and volume so destructive benchmark
+  # seeding cannot affect OLTP data.
+  postgres-projection-benchmark:
+    image: postgres:16.13@sha256:71e27bf60b70bded003791b5573f8b808365613f341df20ffcf0c1ed7bc13ddf
+    environment:
+      POSTGRES_DB: ledger_projection_benchmark
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ledger_projection_benchmark"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - postgres_projection_benchmark_data:/var/lib/postgresql/data
+
   nats:
     image: nats:2.11.17-alpine@sha256:e4bf19f15fd3218814a4e3c9e0064e1334bd8aa20d5984b9f1a0afd084f8cc00
     command: ["-js", "-sd", "/data"]
@@ -60,4 +79,5 @@ volumes:
   postgres_data:
   nats_data:
   postgres_benchmark_data:
+  postgres_projection_benchmark_data:
   nats_benchmark_data:

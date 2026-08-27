@@ -46,6 +46,9 @@ Every run follows this preparation sequence unless its row notes a difference:
 | 19 | `2026-08-26_stage11_dedicated_pools_80_1_5_4_exploratory` | stage 18 | Give foreground 80 sessions; publisher and transfer starvation reduced yield. |
 | 20 | `2026-08-26_stage11_dedicated_pools_posting_batch64_exploratory` | stage 18 | Raise the normal posting micro-batch from 32 to 64; best unprofiled repeat. |
 | 21 | `2026-08-26_dedicated_pools_batch64_selected_target_10ktps` | stage 20 | Profile the selected 70/2/14/4 partition and 64-operation posting batch, and record the no-material-gain verdict. |
+| 22 | `2026-08-26_projection_split_smoke` | stage 21 | Validate exact inbox/aggregate writes and status reads across separate OLTP and projection PostgreSQL databases at 100/s. |
+| 23 | `2026-08-26_projection_split_target_10ktps` | stage 22 | Measure the physical projection split on the shared Docker host; second PostgreSQL process competes for the same resources. |
+| 24 | `2026-08-26_projection_split_pool4_target_10ktps` | stage 23 | Limit projection sessions to four; confirms the regression is host-resource contention, not excess pool size. |
 
 The table lists every committed result directory. Failed development attempts
 are excluded; valid worker sweeps remain committed so the selected defaults and

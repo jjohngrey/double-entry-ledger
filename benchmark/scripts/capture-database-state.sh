@@ -5,6 +5,7 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 OUTPUT=${1:-"$REPO_ROOT/benchmark/database-state.txt"}
 BENCHMARK_DATABASE_URL=${BENCHMARK_DATABASE_URL:-postgres://postgres:postgres@127.0.0.1:5433/ledger_benchmark?sslmode=disable}
+BENCHMARK_PROJECTION_DATABASE_URL=${BENCHMARK_PROJECTION_DATABASE_URL:-}
 
 mkdir -p "$(dirname -- "$OUTPUT")"
 QUERIES=(
@@ -24,8 +25,23 @@ run_query() {
   fi
 }
 
+run_projection_query() {
+  if command -v psql >/dev/null 2>&1; then
+    psql "$BENCHMARK_PROJECTION_DATABASE_URL" -X -v ON_ERROR_STOP=1 -P pager=off -c "$1"
+  else
+    docker compose -f "$REPO_ROOT/docker-compose.yml" exec -T postgres-projection-benchmark \
+      psql -U postgres -d ledger_projection_benchmark -X -v ON_ERROR_STOP=1 -P pager=off -c "$1"
+  fi
+}
+
 {
   for query in "${QUERIES[@]}"; do
     run_query "$query"
   done
+  if [ -n "$BENCHMARK_PROJECTION_DATABASE_URL" ]; then
+    echo "[projection_database]"
+    run_projection_query "SELECT COUNT(*) processed_events FROM processed_events"
+    run_projection_query "SELECT COUNT(*) daily_account_aggregate_rows FROM daily_account_aggregates"
+    run_projection_query "SELECT COUNT(*) daily_ledger_aggregate_rows FROM daily_ledger_aggregates"
+  fi
 } > "$OUTPUT"

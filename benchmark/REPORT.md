@@ -1,5 +1,13 @@
 # Benchmark report — 2026-08-17
 
+> **Projection split update (2026-08-26):** OLTP and aggregate projection can
+> now use separate PostgreSQL databases with exact cross-database completion
+> status. The split-mode control passes at 100/s, but two servers sharing this
+> Docker VM regress to 1,440.3/s at 10k. This validates the design but not a
+> local capacity gain; the projection database must have independent compute
+> and storage to deliver the intended isolation. See
+> [`results/2026-08-26_projection_split_target_10ktps/REPORT.md`](results/2026-08-26_projection_split_target_10ktps/REPORT.md).
+
 > **Fixed-budget pool update (2026-08-26):** Workload-specific connection
 > budgets prevent transfer and projection drains from consuming foreground
 > sessions, and posting batches increase from 32 to 64. The best unprofiled

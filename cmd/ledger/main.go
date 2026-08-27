@@ -45,6 +45,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "configure dedicated db pools: %v\n", err)
 		os.Exit(1)
 	}
+	projectionDSN := os.Getenv("PROJECTION_DATABASE_URL")
+	if projectionDSN != "" && dedicatedConfig.aggregate > 0 {
+		// The aggregate worker no longer consumes an OLTP session budget.
+		dedicatedConfig.foreground += dedicatedConfig.aggregate
+		dedicatedConfig.aggregate = 0
+	}
 	configureDBPool(sqlDB, dedicatedConfig.foreground, poolConfig)
 
 	if err := runMigrations(sqlDB); err != nil {
@@ -54,6 +60,10 @@ func main() {
 
 	store := ledger.NewPostgresStore(sqlDB)
 	transferWorkerStore, publisherStore, aggregateStore := store, store, store
+	var projectionStatusReader interface {
+		GetTransactionProjectionStatus(context.Context, string, string) (ledger.TransactionProjectionStatus, error)
+		WaitForTransactionProjection(context.Context, string, string, time.Duration) (ledger.TransactionProjectionStatus, error)
+	} = store
 	diagnosticPools := map[string]*sql.DB{"foreground": sqlDB}
 	if dedicatedConfig.enabled() {
 		transferDB, err := openDedicatedDB(dsn, dedicatedConfig.transfer, poolConfig)
@@ -68,18 +78,41 @@ func main() {
 			os.Exit(1)
 		}
 		defer publisherDB.Close()
-		aggregateDB, err := openDedicatedDB(dsn, dedicatedConfig.aggregate, poolConfig)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "open aggregate db pool: %v\n", err)
-			os.Exit(1)
-		}
-		defer aggregateDB.Close()
 		transferWorkerStore = store.WithDatabase(transferDB)
 		publisherStore = store.WithDatabase(publisherDB)
-		aggregateStore = store.WithDatabase(aggregateDB)
 		diagnosticPools["transfer"] = transferDB
 		diagnosticPools["publisher"] = publisherDB
-		diagnosticPools["aggregate"] = aggregateDB
+		if dedicatedConfig.aggregate > 0 {
+			aggregateDB, err := openDedicatedDB(dsn, dedicatedConfig.aggregate, poolConfig)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "open aggregate db pool: %v\n", err)
+				os.Exit(1)
+			}
+			defer aggregateDB.Close()
+			aggregateStore = store.WithDatabase(aggregateDB)
+			diagnosticPools["aggregate"] = aggregateDB
+		}
+	}
+	if projectionDSN != "" {
+		projectionMaxOpen, err := positiveEnvInt("PROJECTION_DB_MAX_OPEN_CONNS", 20)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "configure projection db pool: %v\n", err)
+			os.Exit(1)
+		}
+		projectionDB, err := openDedicatedDB(projectionDSN, projectionMaxOpen, poolConfig)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "open projection db pool: %v\n", err)
+			os.Exit(1)
+		}
+		defer projectionDB.Close()
+		if err := runMigrationsAt(projectionDB, "projection-migrations"); err != nil {
+			fmt.Fprintf(os.Stderr, "projection migrations: %v\n", err)
+			os.Exit(1)
+		}
+		projectionStore := store.WithDatabase(projectionDB)
+		aggregateStore = projectionStore
+		projectionStatusReader = ledger.NewProjectionStatusStore(store, projectionStore)
+		diagnosticPools["projection"] = projectionDB
 	}
 	postingBatchSize, err := positiveEnvInt("POSTING_BATCH_SIZE", 64)
 	if err != nil {
@@ -183,11 +216,11 @@ func main() {
 
 	r.Post("/accounts", httphandlers.CreateAccountHandler(store))
 	r.Get("/accounts/{account_id}/transactions", httphandlers.GetAccountEntriesHandler(store))
-	r.Get("/accounts/{account_id}/aggregates", httphandlers.GetAccountAggregatesHandler(store))
-	r.Get("/ledgers/{ledger_id}/aggregates/daily", httphandlers.GetLedgerDailyAggregatesHandler(store))
+	r.Get("/accounts/{account_id}/aggregates", httphandlers.GetAccountAggregatesHandler(aggregateStore))
+	r.Get("/ledgers/{ledger_id}/aggregates/daily", httphandlers.GetLedgerDailyAggregatesHandler(aggregateStore))
 	r.Get("/balance", httphandlers.GetBalanceHandler(store))
 	r.Post("/transactions", httphandlers.CreateTransactionHandler(postingStore))
-	r.Get("/transactions/{transaction_id}/projection-status", httphandlers.GetTransactionProjectionStatusHandler(store))
+	r.Get("/transactions/{transaction_id}/projection-status", httphandlers.GetTransactionProjectionStatusHandler(projectionStatusReader))
 	r.Post("/transfers", httphandlers.CreateTransferHandler(store))
 	r.Get("/transfers/{transfer_id}", httphandlers.GetTransferHandler(store))
 
@@ -394,11 +427,15 @@ func startBackgroundWorker(name string, idleDelay time.Duration, work func() (in
 }
 
 func runMigrations(sqlDB *sql.DB) error {
+	return runMigrationsAt(sqlDB, "migrations")
+}
+
+func runMigrationsAt(sqlDB *sql.DB, migrationPath string) error {
 	driver, err := postgres.WithInstance(sqlDB, &postgres.Config{})
 	if err != nil {
 		return err
 	}
-	m, err := migrate.NewWithDatabaseInstance("file://migrations", "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance("file://"+migrationPath, "postgres", driver)
 	if err != nil {
 		return err
 	}

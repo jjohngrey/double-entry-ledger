@@ -1,0 +1,4 @@
+PASS: split-mode 100/s smoke benchmark; 100.6 successful operations/s, 0% errors.
+PASS: DATABASE_URL=postgres://.../ledger_benchmark go test ./... -count=1
+PASS: go vet ./...
+PASS: bash -n benchmark/scripts/run.sh benchmark/scripts/capture-environment.sh benchmark/scripts/capture-database-state.sh

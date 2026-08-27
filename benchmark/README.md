@@ -96,6 +96,8 @@ Key variables and defaults:
 | `DB_AGGREGATE_POOL_CONNS` | `4` | Sessions reserved for aggregate projection; remaining 70 serve foreground work |
 | `DB_CONN_MAX_LIFETIME` | `30m` | Connection lifetime |
 | `DB_CONN_MAX_IDLE_TIME` | `5m` | Idle expiry |
+| `BENCHMARK_PROJECTION_DATABASE_URL` | empty | Optional distinct database for durable aggregate projection state |
+| `PROJECTION_DB_MAX_OPEN_CONNS` | `20` | Projection database connection cap when the split is enabled |
 | `WORKER_BATCH_SIZE` | `100` | Outbox drain limit per pass |
 | `WORKER_IDLE_DELAY` | `10ms` | Delay only when a worker is idle/errors |
 | `TRANSFER_WORKERS` | `1` | Destination-credit batch processor; one worker avoids pool crowding |
@@ -184,3 +186,7 @@ benchmark/scripts/summarize-k6.py path/to/k6-samples.json.gz \
   The best unprofiled repeat is 3,658.1/s; the selected profiled repeat is
   3,018.0/s, effectively unchanged from stage 10. Its `REPORT.md` records the
   negative experiments and the remaining foreground PostgreSQL bottleneck.
+- `2026-08-26_projection_split_*`: validates an optional separate projection
+  database. It is correct at the 100/s control but slower when both PostgreSQL
+  servers share the same Docker Desktop VM; use independent compute and I/O
+  resources to evaluate its intended capacity benefit.

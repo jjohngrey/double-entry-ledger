@@ -536,6 +536,50 @@ func (s *PostgresStore) WaitForTransactionProjection(ctx context.Context, transa
 	}, s.projectionWaiters, transactionID)
 }
 
+// ProjectionStatusStore composes the immutable OLTP outbox with a separately
+// deployed projection database. The consumer inbox remains atomic with the
+// aggregate rows on the projection side, while the outbox remains authoritative
+// for whether a transaction emitted a projection event.
+type ProjectionStatusStore struct {
+	oltp       *PostgresStore
+	projection *PostgresStore
+}
+
+func NewProjectionStatusStore(oltp, projection *PostgresStore) *ProjectionStatusStore {
+	return &ProjectionStatusStore{oltp: oltp, projection: projection}
+}
+
+func (s *ProjectionStatusStore) GetTransactionProjectionStatus(ctx context.Context, transactionID, consumer string) (TransactionProjectionStatus, error) {
+	if consumer == "" {
+		return TransactionProjectionStatus{}, errors.New("consumer is required")
+	}
+	id, err := uuid.Parse(transactionID)
+	if err != nil {
+		return TransactionProjectionStatus{}, fmt.Errorf("invalid transaction ID: %w", err)
+	}
+	var eventID uuid.UUID
+	if err := s.oltp.db.QueryRowContext(ctx, `
+		SELECT id FROM outbox_events
+		WHERE transaction_id=$1 AND event_type='transaction_posted'`, id).Scan(&eventID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return TransactionProjectionStatus{}, fmt.Errorf("%w: %s", ErrTransactionProjectionNotFound, id)
+		}
+		return TransactionProjectionStatus{}, fmt.Errorf("get transaction projection event: %w", err)
+	}
+	status := TransactionProjectionStatus{TransactionID: id.String(), EventID: eventID.String(), Consumer: consumer}
+	if err := s.projection.db.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM processed_events WHERE consumer=$1 AND event_id=$2)`, consumer, eventID).Scan(&status.Projected); err != nil {
+		return TransactionProjectionStatus{}, fmt.Errorf("get projection inbox status: %w", err)
+	}
+	return status, nil
+}
+
+func (s *ProjectionStatusStore) WaitForTransactionProjection(ctx context.Context, transactionID, consumer string, timeout time.Duration) (TransactionProjectionStatus, error) {
+	return waitForCompletion(ctx, timeout, func() (TransactionProjectionStatus, bool, error) {
+		status, err := s.GetTransactionProjectionStatus(ctx, transactionID, consumer)
+		return status, status.Projected, err
+	}, s.oltp.projectionWaiters, transactionID)
+}
+
 func (s *PostgresStore) getDailyAggregates(ctx context.Context, query string, id uuid.UUID) (AggregateResponse, error) {
 	rows, err := s.db.QueryContext(ctx, query, id)
 	if err != nil {

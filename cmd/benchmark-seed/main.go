@@ -107,6 +107,11 @@ func main() {
 	if err := runMigrations(db, migrationsPath); err != nil {
 		fatalf("migrate database: %v", err)
 	}
+	if projectionDSN := os.Getenv("BENCHMARK_PROJECTION_DATABASE_URL"); projectionDSN != "" {
+		if err := resetProjectionDatabase(ctx, projectionDSN); err != nil {
+			fatalf("reset projection database: %v", err)
+		}
+	}
 	if resetStream {
 		if err := resetJetStream(); err != nil {
 			fatalf("reset JetStream: %v", err)
@@ -121,6 +126,29 @@ func main() {
 		fatalf("write seed metadata: %v", err)
 	}
 	fmt.Printf("seeded %s: %d accounts, %d transactions, %d entries (%s)\n", databaseName, result.Dataset.Accounts, result.Dataset.Transactions, result.Dataset.Entries, output)
+}
+
+func resetProjectionDatabase(ctx context.Context, dsn string) error {
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	if err := waitForDatabase(ctx, db); err != nil {
+		return err
+	}
+	var databaseName string
+	if err := db.QueryRowContext(ctx, `SELECT current_database()`).Scan(&databaseName); err != nil {
+		return err
+	}
+	if !strings.Contains(strings.ToLower(databaseName), "benchmark") {
+		return fmt.Errorf("refusing to reset projection database %q", databaseName)
+	}
+	if err := runMigrations(db, "projection-migrations"); err != nil {
+		return err
+	}
+	_, err = db.ExecContext(ctx, `TRUNCATE processed_events, daily_account_aggregates, daily_ledger_aggregates`)
+	return err
 }
 
 func seed(ctx context.Context, db *sql.DB, databaseName string, pairs, history int) (seedFile, error) {

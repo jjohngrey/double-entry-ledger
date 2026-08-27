@@ -1,0 +1,279 @@
+Pager usage is off.
+Timing is on.
+ANALYZE
+Time: 34.014 ms
+ANALYZE
+Time: 114.401 ms
+ANALYZE
+Time: 38.042 ms
+ANALYZE
+Time: 4.536 ms
+ANALYZE
+Time: 2.125 ms
+ANALYZE
+Time: 88.227 ms
+ANALYZE
+Time: 0.407 ms
+ANALYZE
+Time: 0.415 ms
+ANALYZE
+Time: 0.314 ms
+entry lookup by transaction (idempotent replay and event publisher)
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on entries  (cost=4.47..12.32 rows=2 width=63) (actual time=0.019..0.020 rows=2 loops=1)
+   Recheck Cond: (transaction_id = $0)
+   Heap Blocks: exact=1
+   Buffers: shared hit=5
+   InitPlan 1 (returns $0)
+     ->  Limit  (cost=0.00..0.03 rows=1 width=16) (actual time=0.009..0.010 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Seq Scan on idempotency_keys  (cost=0.00..17.40 rows=512 width=16) (actual time=0.009..0.009 rows=1 loops=1)
+                 Filter: (key ~~ 'benchmark-duplicate-%'::text)
+                 Buffers: shared hit=1
+   ->  Bitmap Index Scan on entries_transaction_id_idx  (cost=0.00..4.43 rows=2 width=0) (actual time=0.017..0.017 rows=2 loops=1)
+         Index Cond: (transaction_id = $0)
+         Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=67 read=3
+ Planning Time: 0.280 ms
+ Execution Time: 0.037 ms
+(17 rows)
+
+Time: 1.049 ms
+account history range in stable order
+                                                                       QUERY PLAN                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using entries_account_created_at_id_idx on entries  (cost=154.85..872.65 rows=383 width=63) (actual time=0.430..63.233 rows=100000 loops=1)
+   Index Cond: ((account_id = $0) AND (created_at >= (now() - '1 year'::interval)) AND (created_at <= now()))
+   Buffers: shared hit=100929
+   WAL: records=45 bytes=2881
+   InitPlan 1 (returns $0)
+     ->  Seq Scan on accounts  (cost=0.00..154.43 rows=1 width=16) (actual time=0.399..0.418 rows=1 loops=1)
+           Filter: (name = 'bench-history-debit'::text)
+           Rows Removed by Filter: 5633
+           Buffers: shared hit=84
+           WAL: records=45 bytes=2881
+ Planning:
+   Buffers: shared hit=61
+ Planning Time: 0.182 ms
+ Execution Time: 68.025 ms
+(14 rows)
+
+Time: 68.819 ms
+saga lookup by primary key
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ Index Scan using sagas_pkey on sagas  (cost=0.22..8.24 rows=1 width=111) (actual time=0.010..0.010 rows=1 loops=1)
+   Index Cond: (id = $0)
+   Buffers: shared hit=3
+   InitPlan 1 (returns $0)
+     ->  Limit  (cost=0.00..0.08 rows=1 width=16) (actual time=0.005..0.005 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Seq Scan on sagas sagas_1  (cost=0.00..9.21 rows=121 width=16) (actual time=0.004..0.004 rows=1 loops=1)
+                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=45
+ Planning Time: 0.115 ms
+ Execution Time: 0.017 ms
+(12 rows)
+
+Time: 0.615 ms
+saga lookup by idempotency key
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using sagas_idempotency_key_key on sagas  (cost=0.34..8.36 rows=1 width=111) (actual time=0.012..0.012 rows=1 loops=1)
+   Index Cond: (idempotency_key = $0)
+   Buffers: shared hit=4
+   InitPlan 1 (returns $0)
+     ->  Limit  (cost=0.00..0.08 rows=1 width=60) (actual time=0.003..0.003 rows=1 loops=1)
+           Buffers: shared hit=1
+           ->  Seq Scan on sagas sagas_1  (cost=0.00..9.21 rows=121 width=60) (actual time=0.003..0.003 rows=1 loops=1)
+                 Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=3
+ Planning Time: 0.047 ms
+ Execution Time: 0.018 ms
+(12 rows)
+
+Time: 0.452 ms
+batched posting account lock
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ LockRows  (cost=324.56..324.58 rows=2 width=102) (actual time=0.762..0.764 rows=2 loops=1)
+   Buffers: shared hit=184
+   WAL: records=2 bytes=108
+   InitPlan 1 (returns $0)
+     ->  Seq Scan on accounts accounts_1  (cost=0.00..154.43 rows=1 width=16) (actual time=0.384..0.394 rows=1 loops=1)
+           Filter: (name = 'bench-normal-debit-000000'::text)
+           Rows Removed by Filter: 5633
+           Buffers: shared hit=84
+   InitPlan 2 (returns $1)
+     ->  Seq Scan on accounts accounts_2  (cost=0.00..154.43 rows=1 width=16) (actual time=0.291..0.297 rows=1 loops=1)
+           Filter: (name = 'bench-normal-credit-000000'::text)
+           Rows Removed by Filter: 5633
+           Buffers: shared hit=84
+   ->  Sort  (cost=15.71..15.71 rows=2 width=102) (actual time=0.755..0.755 rows=2 loops=1)
+         Sort Key: accounts.id
+         Sort Method: quicksort  Memory: 25kB
+         Buffers: shared hit=182
+         ->  Bitmap Heap Scan on accounts  (cost=8.58..15.70 rows=2 width=102) (actual time=0.740..0.743 rows=2 loops=1)
+               Recheck Cond: (id = ANY (ARRAY[$0, $1]))
+               Heap Blocks: exact=2
+               Buffers: shared hit=182
+               ->  Bitmap Index Scan on accounts_pkey  (cost=0.00..8.58 rows=2 width=0) (actual time=0.709..0.709 rows=4 loops=1)
+                     Index Cond: (id = ANY (ARRAY[$0, $1]))
+                     Buffers: shared hit=175
+ Planning:
+   Buffers: shared hit=18
+ Planning Time: 0.145 ms
+ Execution Time: 0.782 ms
+(28 rows)
+
+Time: 1.880 ms
+ready transaction outbox event
+BEGIN
+Time: 0.259 ms
+INSERT 0 1
+Time: 0.717 ms
+                                                                               QUERY PLAN                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.54..14.35 rows=1 width=76) (actual time=0.013..0.014 rows=1 loops=1)
+   Buffers: shared hit=7
+   WAL: records=1 bytes=54
+   ->  LockRows  (cost=0.54..14.35 rows=1 width=76) (actual time=0.013..0.013 rows=1 loops=1)
+         Buffers: shared hit=7
+         WAL: records=1 bytes=54
+         ->  Nested Loop  (cost=0.54..14.34 rows=1 width=76) (actual time=0.010..0.010 rows=1 loops=1)
+               Buffers: shared hit=6
+               ->  Index Scan using outbox_transaction_ready_partial_idx on outbox_events o  (cost=0.12..5.90 rows=1 width=46) (actual time=0.004..0.004 rows=1 loops=1)
+                     Filter: ((status = 'pending'::text) AND (event_type = 'transaction_posted'::text) AND (available_at <= now()))
+                     Buffers: shared hit=2
+               ->  Index Scan using transactions_pkey on transactions t  (cost=0.42..8.44 rows=1 width=46) (actual time=0.005..0.005 rows=1 loops=1)
+                     Index Cond: (id = o.transaction_id)
+                     Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=59
+ Planning Time: 0.206 ms
+ Execution Time: 0.024 ms
+(18 rows)
+
+Time: 0.579 ms
+ROLLBACK
+Time: 0.324 ms
+exact transaction projection status poll
+                                                                    QUERY PLAN                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using outbox_transaction_event_unique on outbox_events o  (cost=0.42..8.44 rows=1 width=17) (actual time=0.017..0.017 rows=1 loops=1)
+   Index Cond: ((transaction_id = 'd64ba0b9-020a-5b4e-949b-b33f1e785337'::uuid) AND (event_type = 'transaction_posted'::text))
+   Buffers: shared hit=4
+   SubPlan 1
+     ->  Seq Scan on processed_events p  (cost=0.00..0.00 rows=1 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+           Filter: ((consumer = 'daily-aggregates-v1'::text) AND (event_id = o.id))
+ Planning:
+   Buffers: shared hit=10
+ Planning Time: 0.293 ms
+ Execution Time: 0.023 ms
+(10 rows)
+
+Time: 0.923 ms
+aggregate projection upserts (rolled back)
+BEGIN
+Time: 0.960 ms
+                                                   QUERY PLAN                                                   
+----------------------------------------------------------------------------------------------------------------
+ Insert on daily_account_aggregates  (cost=0.00..0.02 rows=0 width=0) (actual time=0.345..0.345 rows=0 loops=1)
+   Conflict Resolution: UPDATE
+   Conflict Arbiter Indexes: daily_account_aggregates_pkey
+   Tuples Inserted: 1
+   Conflicting Tuples: 0
+   Buffers: shared hit=5 dirtied=3 written=2
+   WAL: records=4 bytes=329
+   ->  Result  (cost=0.00..0.02 rows=1 width=84) (actual time=0.018..0.018 rows=1 loops=1)
+ Planning Time: 0.037 ms
+ Trigger for constraint daily_account_aggregates_account_id_fkey: time=0.125 calls=1
+ Execution Time: 0.532 ms
+(11 rows)
+
+Time: 1.308 ms
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Insert on daily_ledger_aggregates  (cost=0.00..0.02 rows=0 width=0) (actual time=0.104..0.104 rows=0 loops=1)
+   Conflict Resolution: UPDATE
+   Conflict Arbiter Indexes: daily_ledger_aggregates_pkey
+   Tuples Inserted: 1
+   Conflicting Tuples: 0
+   Buffers: shared hit=5 dirtied=3 written=2
+   WAL: records=4 bytes=329
+   ->  Result  (cost=0.00..0.02 rows=1 width=84) (actual time=0.008..0.008 rows=1 loops=1)
+ Planning Time: 0.013 ms
+ Execution Time: 0.117 ms
+(10 rows)
+
+Time: 0.444 ms
+ROLLBACK
+Time: 0.242 ms
+batched entry insert and balance update (rolled back)
+BEGIN
+Time: 0.214 ms
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Insert on entries  (cost=154.43..308.94 rows=0 width=0) (actual time=0.858..0.858 rows=0 loops=1)
+   Buffers: shared hit=201
+   WAL: records=11 bytes=957
+   CTE fixture
+     ->  Insert on transactions  (cost=0.00..154.43 rows=1 width=40) (actual time=0.374..0.381 rows=1 loops=1)
+           Buffers: shared hit=90
+           WAL: records=3 bytes=239
+           ->  Seq Scan on accounts  (cost=0.00..154.43 rows=1 width=40) (actual time=0.358..0.365 rows=1 loops=1)
+                 Filter: (name = 'bench-normal-debit-000000'::text)
+                 Rows Removed by Filter: 5633
+                 Buffers: shared hit=84
+   ->  Nested Loop  (cost=0.00..154.51 rows=2 width=96) (actual time=0.757..0.782 rows=2 loops=1)
+         Buffers: shared hit=174
+         WAL: records=3 bytes=239
+         ->  CTE Scan on fixture  (cost=0.00..0.02 rows=1 width=16) (actual time=0.375..0.382 rows=1 loops=1)
+               Buffers: shared hit=90
+               WAL: records=3 bytes=239
+         ->  Seq Scan on accounts account  (cost=0.00..154.43 rows=2 width=43) (actual time=0.377..0.389 rows=2 loops=1)
+               Filter: (name = ANY ('{bench-normal-debit-000000,bench-normal-credit-000000}'::text[]))
+               Rows Removed by Filter: 5632
+               Buffers: shared hit=84
+ Planning:
+   Buffers: shared hit=5
+ Planning Time: 0.086 ms
+ Trigger for constraint entries_account_id_fkey on entries: time=0.076 calls=2
+ Trigger for constraint entries_transaction_id_fkey on entries: time=0.044 calls=2
+ Execution Time: 0.993 ms
+(27 rows)
+
+Time: 1.463 ms
+                                                                 QUERY PLAN                                                                  
+---------------------------------------------------------------------------------------------------------------------------------------------
+ Update on accounts account  (cost=309.13..325.49 rows=0 width=0) (actual time=0.645..0.646 rows=0 loops=1)
+   Buffers: shared hit=184
+   WAL: records=2 bytes=142
+   InitPlan 1 (returns $0)
+     ->  Seq Scan on accounts  (cost=0.00..154.43 rows=1 width=16) (actual time=0.307..0.315 rows=1 loops=1)
+           Filter: (name = 'bench-normal-debit-000000'::text)
+           Rows Removed by Filter: 5633
+           Buffers: shared hit=84
+   InitPlan 2 (returns $1)
+     ->  Seq Scan on accounts accounts_1  (cost=0.00..154.43 rows=1 width=16) (actual time=0.285..0.291 rows=1 loops=1)
+           Filter: (name = 'bench-normal-credit-000000'::text)
+           Rows Removed by Filter: 5633
+           Buffers: shared hit=84
+   ->  Nested Loop  (cost=0.28..16.64 rows=2 width=130) (actual time=0.326..0.623 rows=2 loops=1)
+         Buffers: shared hit=174
+         ->  Values Scan on "*VALUES*"  (cost=0.00..0.03 rows=2 width=184) (actual time=0.320..0.613 rows=2 loops=1)
+               Buffers: shared hit=168
+         ->  Index Scan using accounts_pkey on accounts account  (cost=0.28..8.30 rows=1 width=26) (actual time=0.003..0.003 rows=1 loops=2)
+               Index Cond: (id = "*VALUES*".column1)
+               Buffers: shared hit=6
+ Planning Time: 0.103 ms
+ Execution Time: 0.672 ms
+(22 rows)
+
+Time: 1.161 ms
+ROLLBACK
+Time: 0.257 ms
