@@ -70,7 +70,12 @@ func main() {
 	if natsURL == "" {
 		natsURL = "nats://localhost:4222"
 	}
-	natsConn, publisher, err := ledger.NewJetStreamPublisher(natsURL)
+	publishAsyncMaxPending, err := positiveEnvInt("PUBLISH_ASYNC_MAX_PENDING", 256)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "configure NATS async publication: %v\n", err)
+		os.Exit(1)
+	}
+	natsConn, publisher, err := ledger.NewJetStreamPublisher(natsURL, publishAsyncMaxPending)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "connect JetStream: %v\n", err)
 		os.Exit(1)
@@ -86,7 +91,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "configure worker idle delay: %v\n", err)
 		os.Exit(1)
 	}
-	transferWorkers, err := positiveEnvInt("TRANSFER_WORKERS", 16)
+	transferWorkers, err := positiveEnvInt("TRANSFER_WORKERS", 1)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "configure transfer workers: %v\n", err)
 		os.Exit(1)
@@ -111,6 +116,9 @@ func main() {
 			return store.ProcessOutbox(workerBatch)
 		})
 	}
+	startBackgroundWorker("transfer compensation worker", 100*time.Millisecond, func() (int, error) {
+		return store.ProcessCompensationOutbox(workerBatch)
+	})
 	for i := 0; i < publisherWorkers; i++ {
 		startBackgroundWorker(fmt.Sprintf("transaction event publisher %d", i+1), workerIdleDelay, func() (int, error) {
 			return store.PublishCommittedEvents(context.Background(), publisher, workerBatch)

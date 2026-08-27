@@ -1,5 +1,14 @@
 # Benchmark report — 2026-08-17
 
+> **Transfer batch / async publication update (2026-08-21):** Stage 10 batches
+> destination completion across sagas and overlaps bounded JetStream publish
+> acknowledgements. The selected 1/16 control sustains 1,000.4/s with zero
+> drops/errors/waits and reduces overall p99 from 90 ms to 63.62 ms. At 10k,
+> the best repeat reaches 3,637.1/s at 1.70s p99 and the profiled repeat reaches
+> 3,019.8/s at 2.70s p99—better transfer fairness/tails, but below stage 9's
+> 3,818.6/s headline yield. See
+> [`results/2026-08-21_transfer_batch_async_publish_selected_target_10ktps/REPORT.md`](results/2026-08-21_transfer_batch_async_publish_selected_target_10ktps/REPORT.md).
+
 > **Multi-operation batching update (2026-08-21):** Transparent posting
 > micro-batches raise successful arrival-window yield at 10k offered load from
 > 2,458.1/s to 3,818.6/s, keep logical errors at 0%, and reduce overall p99

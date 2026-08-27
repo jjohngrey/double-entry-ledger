@@ -32,16 +32,36 @@ var backgroundTxOptions = &sql.TxOptions{Isolation: sql.LevelReadCommitted}
 type EventPublisher interface {
 	Publish(context.Context, string, []byte, string) error
 }
+
+type EventPublication struct {
+	Subject string
+	Data    []byte
+	EventID string
+}
+
+// BatchEventPublisher submits a bounded group before awaiting acknowledgements,
+// overlapping broker latency while preserving an error result per event.
+type BatchEventPublisher interface {
+	PublishBatch(context.Context, []EventPublication) []error
+}
+
 type JetStreamPublisher struct{ js nats.JetStreamContext }
 
 func (p *JetStreamPublisher) JetStream() nats.JetStreamContext { return p.js }
 
-func NewJetStreamPublisher(url string) (*nats.Conn, *JetStreamPublisher, error) {
+func NewJetStreamPublisher(url string, asyncMaxPending ...int) (*nats.Conn, *JetStreamPublisher, error) {
+	maxPending := 256
+	if len(asyncMaxPending) > 0 {
+		maxPending = asyncMaxPending[0]
+	}
+	if maxPending <= 0 {
+		return nil, nil, errors.New("NATS async max pending must be positive")
+	}
 	nc, err := nats.Connect(url)
 	if err != nil {
 		return nil, nil, err
 	}
-	js, err := nc.JetStream()
+	js, err := nc.JetStream(nats.PublishAsyncMaxPending(maxPending))
 	if err != nil {
 		nc.Close()
 		return nil, nil, err
@@ -65,6 +85,33 @@ func (p *JetStreamPublisher) Publish(ctx context.Context, subject string, data [
 	return err
 }
 
+func (p *JetStreamPublisher) PublishBatch(ctx context.Context, publications []EventPublication) []error {
+	errorsByIndex := make([]error, len(publications))
+	type pendingAck struct {
+		index  int
+		future nats.PubAckFuture
+	}
+	pending := make([]pendingAck, 0, len(publications))
+	for index, publication := range publications {
+		future, err := p.js.PublishAsync(publication.Subject, publication.Data)
+		if err != nil {
+			errorsByIndex[index] = err
+			continue
+		}
+		pending = append(pending, pendingAck{index: index, future: future})
+	}
+	for _, acknowledgement := range pending {
+		select {
+		case <-acknowledgement.future.Ok():
+		case err := <-acknowledgement.future.Err():
+			errorsByIndex[acknowledgement.index] = err
+		case <-ctx.Done():
+			errorsByIndex[acknowledgement.index] = ctx.Err()
+		}
+	}
+	return errorsByIndex
+}
+
 // PublishCommittedEvents is at-least-once: a crash after Publish but before
 // the outbox update can produce a duplicate delivery.
 func (s *PostgresStore) PublishCommittedEvents(ctx context.Context, publisher EventPublisher, limit int) (int, error) {
@@ -81,15 +128,43 @@ func (s *PostgresStore) PublishCommittedEvents(ctx context.Context, publisher Ev
 		_ = s.releaseTransactionOutboxClaim(ctx, owner)
 		return 0, err
 	}
+	publications := make([]EventPublication, len(events))
+	publishErrors := make([]error, len(events))
+	validPublications := make([]EventPublication, 0, len(events))
+	validIndexes := make([]int, 0, len(events))
+	for index, event := range events {
+		payload, marshalErr := json.Marshal(event)
+		if marshalErr != nil {
+			publishErrors[index] = marshalErr
+			continue
+		}
+		publications[index] = EventPublication{Subject: TransactionPostedSubject, Data: payload, EventID: event.EventID}
+		validPublications = append(validPublications, publications[index])
+		validIndexes = append(validIndexes, index)
+	}
+	if batchPublisher, ok := publisher.(BatchEventPublisher); ok {
+		batchResults := batchPublisher.PublishBatch(ctx, validPublications)
+		if len(batchResults) != len(validPublications) {
+			batchResults = make([]error, len(validPublications))
+			for index := range batchResults {
+				batchResults[index] = errors.New("batch publisher returned an invalid result count")
+			}
+		}
+		for resultIndex, eventIndex := range validIndexes {
+			publishErrors[eventIndex] = batchResults[resultIndex]
+		}
+	} else {
+		for index, publication := range publications {
+			if publishErrors[index] == nil {
+				publishErrors[index] = publisher.Publish(ctx, publication.Subject, publication.Data, publication.EventID)
+			}
+		}
+	}
 	succeeded := make([]uuid.UUID, 0, len(events))
 	failed := make([]uuid.UUID, 0)
 	var firstErr error
-	for _, event := range events {
-		payload, marshalErr := json.Marshal(event)
-		publishErr := marshalErr
-		if publishErr == nil {
-			publishErr = publisher.Publish(ctx, TransactionPostedSubject, payload, event.EventID)
-		}
+	for index, event := range events {
+		publishErr := publishErrors[index]
 		eventID := uuid.MustParse(event.EventID)
 		if publishErr != nil {
 			failed = append(failed, eventID)

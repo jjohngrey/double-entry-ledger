@@ -1,0 +1,46 @@
+File: ledger
+Type: inuse_space
+Time: 2026-08-21 11:04:04 EDT
+Showing nodes accounting for 41532.39kB, 100% of 41532.39kB total
+Showing top 40 nodes out of 149
+      flat  flat%   sum%        cum   cum%
+ 9766.05kB 23.51% 23.51%  9766.05kB 23.51%  bufio.NewReaderSize (inline)
+ 5779.71kB 13.92% 37.43%  5779.71kB 13.92%  github.com/jackc/pgx/v5/internal/stmtcache.NewLRUCache (inline)
+ 5650.02kB 13.60% 51.03%  5650.02kB 13.60%  bufio.NewWriterSize (inline)
+ 3618.05kB  8.71% 59.75%  3618.05kB  8.71%  strings.(*Builder).Write
+ 3077.24kB  7.41% 67.15%  3077.24kB  7.41%  runtime.mallocgc
+ 1536.16kB  3.70% 70.85%  1536.16kB  3.70%  context.(*cancelCtx).Done
+ 1038.06kB  2.50% 73.35%  1038.06kB  2.50%  strings.(*Builder).WriteString
+ 1024.14kB  2.47% 75.82%  1024.14kB  2.47%  net/http.(*Server).newConn (inline)
+  809.97kB  1.95% 77.77%   809.97kB  1.95%  github.com/nats-io/nats%2ego.(*js).PullSubscribe
+  521.05kB  1.25% 79.02%   521.05kB  1.25%  net/http.(*Server).trackConn
+  516.01kB  1.24% 80.27%   516.01kB  1.24%  runtime/pprof.(*profMap).lookup
+  512.88kB  1.23% 81.50%   512.88kB  1.23%  github.com/jackc/pgx/v5.(*ExtendedQueryBuilder).reset
+  512.69kB  1.23% 82.74%  1536.98kB  3.70%  github.com/jackc/pgx/v5/pgconn.connectOne
+  512.62kB  1.23% 83.97%  1024.63kB  2.47%  github.com/jackc/pgx/v5/pgconn.(*PgConn).Prepare
+  512.44kB  1.23% 85.20%  1537.07kB  3.70%  github.com/jackc/pgx/v5.(*Conn).Prepare
+  512.28kB  1.23% 86.44%   512.28kB  1.23%  github.com/jackc/pgx/v5/pgconn.(*PgConn).receiveMessage
+  512.25kB  1.23% 87.67%   512.25kB  1.23%  sync.(*poolChain).pushHead
+  512.20kB  1.23% 88.90%   512.20kB  1.23%  github.com/jackc/pgx/v5/pgtype.(*Map).planEncodeDepth
+  512.16kB  1.23% 90.14%  1024.19kB  2.47%  net/http.readRequest
+  512.12kB  1.23% 91.37%  2057.32kB  4.95%  net/http.ListenAndServe
+  512.12kB  1.23% 92.60%  4612.42kB 11.11%  net/http.(*conn).readRequest
+  512.10kB  1.23% 93.84%  1536.21kB  3.70%  context.(*cancelCtx).propagateCancel
+  512.03kB  1.23% 95.07%   512.03kB  1.23%  sync.NewCond (inline)
+  512.02kB  1.23% 96.30%   512.02kB  1.23%  syscall.anyToSockaddr
+  512.01kB  1.23% 97.53%   512.01kB  1.23%  errors.New
+  512.01kB  1.23% 98.77%   512.01kB  1.23%  github.com/go-chi/chi/v5.(*node).findRoute
+  512.01kB  1.23%   100%   512.01kB  1.23%  github.com/jackc/pgx/v5/pgconn.convertRowDescription (inline)
+         0     0%   100%   512.03kB  1.23%  bufio.(*Reader).ReadLine
+         0     0%   100%   512.03kB  1.23%  bufio.(*Reader).ReadSlice
+         0     0%   100%   512.03kB  1.23%  bufio.(*Reader).fill
+         0     0%   100%  9766.05kB 23.51%  bufio.NewReader
+         0     0%   100%   512.10kB  1.23%  context.AfterFunc
+         0     0%   100%  1024.11kB  2.47%  context.WithCancel
+         0     0%   100%  1024.11kB  2.47%  context.withCancel (inline)
+         0     0%   100%  2075.15kB  5.00%  database/sql.(*DB).BeginTx
+         0     0%   100%  2075.15kB  5.00%  database/sql.(*DB).BeginTx.func1
+         0     0%   100%  5753.64kB 13.85%  database/sql.(*DB).QueryContext
+         0     0%   100%  5753.64kB 13.85%  database/sql.(*DB).QueryContext.func1
+         0     0%   100%   512.10kB  1.23%  database/sql.(*DB).QueryRowContext
+         0     0%   100%  2075.15kB  5.00%  database/sql.(*DB).begin

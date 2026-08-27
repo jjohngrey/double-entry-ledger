@@ -95,8 +95,9 @@ Key variables and defaults:
 | `DB_CONN_MAX_IDLE_TIME` | `5m` | Idle expiry |
 | `WORKER_BATCH_SIZE` | `100` | Outbox drain limit per pass |
 | `WORKER_IDLE_DELAY` | `10ms` | Delay only when a worker is idle/errors |
-| `TRANSFER_WORKERS` | `16` | Concurrent transfer outbox processors |
+| `TRANSFER_WORKERS` | `1` | Destination-credit batch processor; one worker avoids pool crowding |
 | `PUBLISHER_WORKERS` | `16` | Concurrent transaction event publishers |
+| `PUBLISH_ASYNC_MAX_PENDING` | `256` | Bounded JetStream publish acknowledgements in flight |
 | `AGGREGATE_WORKERS` | `4` | Concurrent durable aggregate consumers |
 | `AGGREGATE_FETCH_BATCH` | `64` | JetStream messages requested per aggregate fetch |
 | `POSTING_BATCH_SIZE` | `32` | Maximum non-idempotent posts per shared commit |
@@ -114,6 +115,7 @@ image before environment capture. `environment.txt` records machine/OS, Go and
 k6 versions, exact image references and IDs, Docker CPU/RAM allocation,
 PostgreSQL version/settings, pool values, exact dataset cardinality, VU caps,
 rates, and every warm-up/measurement timing input. No DSN password is written.
+It also records `git_head` and whether the worktree was dirty at capture time.
 Before seeding or starting load, `run-metadata.json` records the stage,
 predecessor, change under test, objective, and preparation sequence. This keeps
 future metrics self-describing and reviewable before commit.
@@ -169,3 +171,9 @@ benchmark/scripts/summarize-k6.py path/to/k6-samples.json.gz \
   target attempt. Successful arrival-window yield is 3,818.6/s with zero
   logical errors and 3,162 ms overall p99; it honestly fails the 10k / 50 ms
   gate and records the remaining transfer/projection and pool bottlenecks.
+- `2026-08-21_transfer_batch_async_publish_*`: stage-10 control, worker sweeps,
+  and target repeats for batched multi-saga destination completion and bounded
+  asynchronous JetStream publication. The selected 1/16 control sustains
+  1,000.4/s at 63.62 ms p99; target repeats improve transfer fairness and tail
+  latency but do not exceed stage 9's total yield. The selected profiled
+  target's `REPORT.md` documents every retained sweep and the tradeoff.

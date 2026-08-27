@@ -1,0 +1,23 @@
+Stage-10 verification — 2026-08-21
+
+DATABASE_URL=postgres://postgres:***@127.0.0.1:5433/ledger_benchmark?sslmode=disable go test ./... -count=1
+PASS
+ok github.com/jjohngrey/double-entry-ledger/internal/http 0.545s
+ok github.com/jjohngrey/double-entry-ledger/internal/ledger 2.629s
+
+DATABASE_URL= go test ./... -count=1
+PASS
+ok github.com/jjohngrey/double-entry-ledger/internal/http 0.282s
+ok github.com/jjohngrey/double-entry-ledger/internal/ledger 0.538s
+
+go vet ./...
+PASS
+
+node --check benchmark/k6/ledger.js
+PASS
+
+bash -n benchmark/scripts/*.sh
+PASS
+
+git diff --check
+PASS

@@ -1,0 +1,26 @@
+     event_type     |  status   | count  
+--------------------+-----------+--------
+ destination_credit | processed |   4889
+ transaction_posted | processed | 125616
+(2 rows)
+
+  status   | count 
+-----------+-------
+ completed |  4889
+(1 row)
+
+ processed_events 
+------------------
+            24592
+(1 row)
+
+ daily_account_aggregate_rows 
+------------------------------
+                         4096
+(1 row)
+
+ daily_ledger_aggregate_rows 
+-----------------------------
+                        2048
+(1 row)
+

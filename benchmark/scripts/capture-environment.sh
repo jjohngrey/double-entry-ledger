@@ -44,8 +44,9 @@ mkdir -p "$(dirname -- "$OUTPUT")"
   echo "http_request_log=${HTTP_REQUEST_LOG:-false}"
   echo "worker_batch_size=${WORKER_BATCH_SIZE:-100}"
   echo "worker_idle_delay=${WORKER_IDLE_DELAY:-10ms}"
-  echo "transfer_workers=${TRANSFER_WORKERS:-16}"
+  echo "transfer_workers=${TRANSFER_WORKERS:-1}"
   echo "publisher_workers=${PUBLISHER_WORKERS:-16}"
+  echo "publish_async_max_pending=${PUBLISH_ASYNC_MAX_PENDING:-256}"
   echo "aggregate_workers=${AGGREGATE_WORKERS:-4}"
   echo "aggregate_fetch_batch=${AGGREGATE_FETCH_BATCH:-64}"
   echo "posting_batch_size=${POSTING_BATCH_SIZE:-32}"
@@ -74,6 +75,11 @@ mkdir -p "$(dirname -- "$OUTPUT")"
     fi
   fi
   echo "git_head=$(git -C "$REPO_ROOT" rev-parse --verify HEAD 2>/dev/null || echo unborn)"
+  if [ -n "$(git -C "$REPO_ROOT" status --porcelain --untracked-files=normal 2>/dev/null)" ]; then
+    echo "git_worktree_dirty=true"
+  else
+    echo "git_worktree_dirty=false"
+  fi
   echo
   echo "[postgres_version]"
   if command -v psql >/dev/null 2>&1; then

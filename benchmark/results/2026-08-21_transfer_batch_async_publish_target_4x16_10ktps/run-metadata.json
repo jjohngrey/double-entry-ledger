@@ -1,0 +1,20 @@
+{
+  "captured_before_load": true,
+  "captured_utc": "2026-08-21T15:04:34.832312+00:00",
+  "change_under_test": "batch destination-credit completion with 4 transfer workers and bounded asynchronous JetStream publication with 16 publishers",
+  "objective": "retain filled transfer batches while recovering aggregate delivery at 10k offered load",
+  "pre_run_steps": [
+    "start the digest-pinned isolated PostgreSQL and NATS services and wait for health",
+    "refuse to run if another HTTP service is already listening on the benchmark address",
+    "migrate and destructively reseed only the dedicated ledger_benchmark database",
+    "reset the dedicated JetStream stream",
+    "build the ledger binary from the current working tree",
+    "capture the exact environment, dataset, pool, worker, rate, duration, and VU configuration",
+    "run the excluded warm-up, allow it to drain, then wait the configured settle period",
+    "capture measurement metrics and optional CPU/heap profiles",
+    "capture final pool statistics, database state, query plans, raw k6 samples, and summaries"
+  ],
+  "predecessor": "2026-08-21_transfer_batch_async_publish_target_10ktps",
+  "schema_version": 1,
+  "stage": "stage-10-transfer-batch-async-publish-target-4x16"
+}

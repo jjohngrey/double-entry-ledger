@@ -15,11 +15,40 @@ type recordingEventPublisher struct {
 	calls map[string]int
 }
 
+type recordingBatchEventPublisher struct {
+	mu         sync.Mutex
+	batchCalls int
+	syncCalls  int
+	failID     string
+	calls      map[string]int
+}
+
 func (p *recordingEventPublisher) Publish(_ context.Context, _ string, _ []byte, eventID string) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.calls[eventID]++
 	return nil
+}
+
+func (p *recordingBatchEventPublisher) Publish(_ context.Context, _ string, _ []byte, _ string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.syncCalls++
+	return nil
+}
+
+func (p *recordingBatchEventPublisher) PublishBatch(_ context.Context, publications []EventPublication) []error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.batchCalls++
+	results := make([]error, len(publications))
+	for index, publication := range publications {
+		p.calls[publication.EventID]++
+		if publication.EventID == p.failID {
+			results[index] = errors.New("simulated asynchronous acknowledgement failure")
+		}
+	}
+	return results
 }
 
 func TestAggregateReplayMatchesRawEntriesAndIsIdempotent(t *testing.T) {
@@ -195,6 +224,57 @@ func TestConcurrentBatchPublishersClaimEachEventOnce(t *testing.T) {
 	}
 	if processed != 20 {
 		t.Fatalf("processed outbox rows=%d, want 20", processed)
+	}
+}
+
+func TestBatchPublisherRetriesOnlyFailedAcknowledgement(t *testing.T) {
+	db := openPostgresTestDB(t)
+	store := NewPostgresStore(db)
+	cash, _ := store.CreateAccount("Async Publisher Cash", AssetType)
+	revenue, _ := store.CreateAccount("Async Publisher Revenue", RevenueType)
+	for range 4 {
+		if _, _, err := store.CreateTransaction("", []EntryRequest{
+			{AccountID: cash.ID, Debit: decimal.NewFromInt(1)},
+			{AccountID: revenue.ID, Credit: decimal.NewFromInt(1)},
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var failedID string
+	if err := db.QueryRow(`SELECT id::text FROM outbox_events WHERE event_type='transaction_posted' ORDER BY created_at,id LIMIT 1`).Scan(&failedID); err != nil {
+		t.Fatal(err)
+	}
+	publisher := &recordingBatchEventPublisher{calls: make(map[string]int), failID: failedID}
+	processed, err := store.PublishCommittedEvents(context.Background(), publisher, 4)
+	if err == nil || processed != 3 {
+		t.Fatalf("first async publish processed=%d err=%v, want 3 and error", processed, err)
+	}
+	if publisher.batchCalls != 1 || publisher.syncCalls != 0 {
+		t.Fatalf("batch calls=%d sync calls=%d, want 1/0", publisher.batchCalls, publisher.syncCalls)
+	}
+	var completed, pending int
+	if err := db.QueryRow(`SELECT COUNT(*) FILTER (WHERE status='processed'),COUNT(*) FILTER (WHERE status='pending') FROM outbox_events WHERE event_type='transaction_posted'`).Scan(&completed, &pending); err != nil {
+		t.Fatal(err)
+	}
+	if completed != 3 || pending != 1 {
+		t.Fatalf("completed=%d pending=%d, want 3/1", completed, pending)
+	}
+
+	if _, err := db.Exec(`UPDATE outbox_events SET available_at=NOW() WHERE id=$1`, failedID); err != nil {
+		t.Fatal(err)
+	}
+	publisher.failID = ""
+	processed, err = store.PublishCommittedEvents(context.Background(), publisher, 4)
+	if err != nil || processed != 1 {
+		t.Fatalf("retry async publish processed=%d err=%v, want 1/nil", processed, err)
+	}
+	if publisher.calls[failedID] != 2 {
+		t.Fatalf("failed event publish calls=%d, want 2", publisher.calls[failedID])
+	}
+	for eventID, calls := range publisher.calls {
+		if eventID != failedID && calls != 1 {
+			t.Fatalf("successful event %s was published %d times", eventID, calls)
+		}
 	}
 }
 

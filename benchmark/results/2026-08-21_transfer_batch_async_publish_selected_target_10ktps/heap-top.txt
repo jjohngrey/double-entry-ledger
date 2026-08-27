@@ -1,0 +1,46 @@
+File: ledger
+Type: inuse_space
+Time: 2026-08-21 11:10:33 EDT
+Showing nodes accounting for 55.77MB, 100% of 55.77MB total
+Showing top 40 nodes out of 148
+      flat  flat%   sum%        cum   cum%
+   13.54MB 24.29% 24.29%    13.54MB 24.29%  bufio.NewWriterSize
+    9.54MB 17.10% 41.39%     9.54MB 17.10%  bufio.NewReaderSize (inline)
+    6.51MB 11.67% 53.05%     6.51MB 11.67%  runtime.mallocgc
+    5.13MB  9.20% 62.26%     5.13MB  9.20%  github.com/jackc/pgx/v5/internal/stmtcache.NewLRUCache (inline)
+    4.06MB  7.28% 69.54%     4.06MB  7.28%  strings.(*Builder).Write
+    1.50MB  2.69% 72.23%     2.50MB  4.48%  net/http.readRequest
+    1.50MB  2.69% 74.92%     1.50MB  2.69%  context.(*cancelCtx).Done
+    1.16MB  2.07% 76.99%     1.16MB  2.07%  runtime/pprof.StartCPUProfile
+       1MB  1.79% 78.78%        1MB  1.79%  github.com/go-chi/chi/v5.NewRouteContext
+       1MB  1.79% 80.58%        1MB  1.79%  net/textproto.readMIMEHeader
+       1MB  1.79% 82.37%        1MB  1.79%  net/http.(*Server).newConn (inline)
+       1MB  1.79% 84.16%        1MB  1.79%  net.newFD (inline)
+       1MB  1.79% 85.96%     1.50MB  2.69%  context.withCancel (inline)
+    0.79MB  1.42% 87.38%     0.79MB  1.42%  github.com/nats-io/nats%2ego.(*js).PullSubscribe
+    0.52MB  0.93% 88.31%     1.03MB  1.85%  github.com/jackc/pgx/v5/pgproto3.(*Bind).Encode
+    0.51MB  0.92% 89.23%     0.51MB  0.92%  github.com/jackc/pgx/v5/internal/pgio.AppendUint32 (inline)
+    0.50MB   0.9% 90.13%     0.50MB   0.9%  github.com/jackc/pgx/v5/internal/iobufpool.init.0.func1
+    0.50MB   0.9% 91.03%        1MB  1.80%  github.com/jackc/pgx/v5/pgconn.connectOne
+    0.50MB   0.9% 91.93%     0.50MB   0.9%  github.com/jackc/pgx/v5/pgconn.(*PgConn).Prepare
+    0.50MB   0.9% 92.83%     0.50MB   0.9%  github.com/jackc/pgx/v5/pgproto3.(*Frontend).Flush
+    0.50MB   0.9% 93.72%     0.50MB   0.9%  github.com/nats-io/nats%2ego.(*Conn).processMsg
+    0.50MB   0.9% 94.62%     2.50MB  4.48%  net/http.ListenAndServe
+    0.50MB   0.9% 95.52%        1MB  1.79%  context.(*cancelCtx).propagateCancel
+    0.50MB   0.9% 96.41%     0.50MB   0.9%  database/sql.(*DB).addDepLocked (inline)
+    0.50MB   0.9% 97.31%     2.03MB  3.63%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*BatchingPostgresStore).CreateTransaction
+    0.50MB   0.9% 98.21%     0.50MB   0.9%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*completionWaiters).subscribe
+    0.50MB   0.9% 99.10%     0.50MB   0.9%  sync.runtime_notifyListWait
+    0.50MB   0.9%   100%     0.50MB   0.9%  time.newTimer
+         0     0%   100%     9.54MB 17.10%  bufio.NewReader
+         0     0%   100%     0.50MB   0.9%  context.AfterFunc
+         0     0%   100%     1.50MB  2.69%  context.WithCancel
+         0     0%   100%     0.50MB   0.9%  context.WithDeadline (inline)
+         0     0%   100%     0.50MB   0.9%  context.WithDeadlineCause
+         0     0%   100%     0.50MB   0.9%  context.WithTimeout
+         0     0%   100%     2.55MB  4.58%  database/sql.(*DB).BeginTx
+         0     0%   100%     2.55MB  4.58%  database/sql.(*DB).BeginTx.func1
+         0     0%   100%     2.56MB  4.58%  database/sql.(*DB).ExecContext
+         0     0%   100%     2.56MB  4.58%  database/sql.(*DB).ExecContext.func1
+         0     0%   100%     2.53MB  4.53%  database/sql.(*DB).QueryContext
+         0     0%   100%     2.53MB  4.53%  database/sql.(*DB).QueryContext.func1

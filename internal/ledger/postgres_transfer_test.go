@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -241,6 +242,58 @@ func TestPostgresTransfer_ReplayedOutboxDoesNotDoubleCredit(t *testing.T) {
 	}
 	if transactionCountAfter != transactionCountBefore {
 		t.Fatalf("transaction count after replay = %d, want %d", transactionCountAfter, transactionCountBefore)
+	}
+}
+
+func TestPostgresTransfer_BatchesDestinationCreditsAcrossSagas(t *testing.T) {
+	fixture := newPostgresTransferFixture(t)
+	const transfers = 8
+	created := make([]*TransferResponse, 0, transfers)
+	for index := 0; index < transfers; index++ {
+		request := fixture.request
+		request.Amount = decimal.NewFromInt(5)
+		request.IdempotencyKey = fmt.Sprintf("postgres-transfer-batch-%d", index)
+		transfer, existed, err := fixture.store.CreateTransfer(request)
+		if err != nil || existed {
+			t.Fatalf("create transfer %d: existed=%t err=%v", index, existed, err)
+		}
+		created = append(created, transfer)
+	}
+
+	var transactionsBefore int
+	if err := fixture.store.db.QueryRow(`SELECT COUNT(*) FROM transactions`).Scan(&transactionsBefore); err != nil {
+		t.Fatal(err)
+	}
+	processed, err := fixture.store.ProcessOutbox(transfers)
+	if err != nil {
+		t.Fatalf("process destination batch: %v", err)
+	}
+	if processed != transfers {
+		t.Fatalf("processed destination events=%d, want %d", processed, transfers)
+	}
+	assertPostgresTransferBalance(t, fixture.store, fixture.source.ID, decimal.NewFromInt(60))
+	assertPostgresTransferBalance(t, fixture.store, fixture.destination.ID, decimal.NewFromInt(40))
+	for _, transfer := range created {
+		result, err := fixture.store.GetTransfer(transfer.ID)
+		if err != nil || result.Status != TransferCompleted {
+			t.Fatalf("transfer %s status=%v err=%v", transfer.ID, result, err)
+		}
+	}
+	var transactionsAfter, completedSteps, processedEvents int
+	if err := fixture.store.db.QueryRow(`SELECT COUNT(*) FROM transactions`).Scan(&transactionsAfter); err != nil {
+		t.Fatal(err)
+	}
+	if err := fixture.store.db.QueryRow(`SELECT COUNT(*) FROM saga_steps WHERE step='destination_credit' AND status='completed'`).Scan(&completedSteps); err != nil {
+		t.Fatal(err)
+	}
+	if err := fixture.store.db.QueryRow(`SELECT COUNT(*) FROM outbox_events WHERE event_type='destination_credit' AND status='processed'`).Scan(&processedEvents); err != nil {
+		t.Fatal(err)
+	}
+	if transactionsAfter-transactionsBefore != transfers || completedSteps != transfers || processedEvents != transfers {
+		t.Fatalf("transactions added=%d completed steps=%d processed events=%d, want %d each", transactionsAfter-transactionsBefore, completedSteps, processedEvents, transfers)
+	}
+	if replayed, err := fixture.store.ProcessOutbox(transfers); err != nil || replayed != 0 {
+		t.Fatalf("replayed destination batch=%d err=%v, want no-op", replayed, err)
 	}
 }
 

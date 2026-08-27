@@ -34,9 +34,17 @@ Every run follows this preparation sequence unless its row notes a difference:
 | 7 | `2026-08-21_optimized_target_10ktps` | stage 6 | Run the retained optimized implementation at the full 10k target and profile the remaining bottleneck. |
 | 8 | `2026-08-21_posting_batch_1000tps` | stage 7 | Add transparent multi-operation posting micro-batches (32 maximum, 500 microseconds, four writers) and validate at 1k. |
 | 9 | `2026-08-21_posting_batch_target_10ktps` | stage 8 | Run the same posting-batch implementation at 10k offered load with CPU/heap profiles and final correctness evidence. |
+| 10 | `2026-08-21_transfer_batch_async_publish_4x4_1000tps` | stage 9 | Validate multi-saga destination completion and bounded async publication with four transfer/four publisher workers at 1k. |
+| 11 | `2026-08-21_transfer_batch_async_publish_target_10ktps` | stage 10 | Profile the four/four worker mix at 10k; transfer improved while aggregate delivery became the limiting tradeoff. |
+| 12 | `2026-08-21_transfer_batch_async_publish_target_4x16_10ktps` | stage 11 | Restore sixteen async publishers while retaining four transfer batch workers. |
+| 13 | `2026-08-21_transfer_batch_async_publish_target_1x16_10ktps` | stage 12 | Reduce transfer processing to one batch worker to protect foreground/projection pool capacity; best stage-10 target repeat. |
+| 14 | `2026-08-21_transfer_batch_async_publish_target_1x8_10ktps` | stage 13 | Test the publisher midpoint; eight publishers underfed projection and reduced total yield. |
+| 15 | `2026-08-21_transfer_batch_async_publish_1000tps` | stage 13 | Validate the selected one-transfer/16-publisher default at sustainable 1k load. |
+| 16 | `2026-08-21_transfer_batch_async_publish_selected_target_10ktps` | stage 15 | Profile the exact selected default at 10k and record correctness plus the remaining shared-pool bottleneck. |
 
-The table lists every result directory included in this push. Intermediate
-exploratory captures not selected as lineage evidence remain local.
+The table lists every committed result directory. Failed development attempts
+are excluded; valid worker sweeps remain committed so the selected defaults and
+negative findings are reproducible.
 
 ## Labeling a future run
 

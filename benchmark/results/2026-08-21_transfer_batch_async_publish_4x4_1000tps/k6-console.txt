@@ -1,0 +1,275 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: /work/benchmark/k6/ledger.js
+        output: json (/work/benchmark/results/2026-08-21_transfer_batch_async_publish_1000tps/k6-samples.json)
+
+     scenarios: (100.00%) 5 scenarios, 2048 max VUs, 57s max duration (incl. graceful stop):
+              * warmup: 100.00 iterations/s for 5s (maxVUs: 256-512, exec: warmup, gracefulStop: 10s)
+              * aggregate_event_ingestion: 150.00 iterations/s for 10s (maxVUs: 256-512, exec: aggregateEventIngestion, startTime: 17s, gracefulStop: 30s)
+              * cross_ledger_transfer: 150.00 iterations/s for 10s (maxVUs: 256-512, exec: crossLedgerTransfer, startTime: 17s, gracefulStop: 30s)
+              * idempotent_duplicate_posting: 200.00 iterations/s for 10s (maxVUs: 256-512, exec: idempotentDuplicatePosting, startTime: 17s, gracefulStop: 30s)
+              * normal_balanced_posting: 500.00 iterations/s for 10s (maxVUs: 256-512, exec: normalBalancedPosting, startTime: 17s, gracefulStop: 30s)
+
+
+running (00.8s), 0001/1024 VUs, 76 complete and 0 interrupted iterations
+warmup                         [  15% ] 001/256 VUs  0.8s/5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      16.2s   
+cross_ledger_transfer        • [   0% ] waiting      16.2s   
+idempotent_duplicate_posting • [   0% ] waiting      16.2s   
+normal_balanced_posting      • [   0% ] waiting      16.2s   
+
+running (01.8s), 0000/1024 VUs, 177 complete and 0 interrupted iterations
+warmup                         [  35% ] 000/256 VUs  1.8s/5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      15.2s   
+cross_ledger_transfer        • [   0% ] waiting      15.2s   
+idempotent_duplicate_posting • [   0% ] waiting      15.2s   
+normal_balanced_posting      • [   0% ] waiting      15.2s   
+
+running (02.8s), 0000/1024 VUs, 277 complete and 0 interrupted iterations
+warmup                         [  55% ] 000/256 VUs  2.8s/5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      14.2s   
+cross_ledger_transfer        • [   0% ] waiting      14.2s   
+idempotent_duplicate_posting • [   0% ] waiting      14.2s   
+normal_balanced_posting      • [   0% ] waiting      14.2s   
+
+running (03.8s), 0000/1024 VUs, 377 complete and 0 interrupted iterations
+warmup                         [  75% ] 000/256 VUs  3.8s/5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      13.2s   
+cross_ledger_transfer        • [   0% ] waiting      13.2s   
+idempotent_duplicate_posting • [   0% ] waiting      13.2s   
+normal_balanced_posting      • [   0% ] waiting      13.2s   
+
+running (04.8s), 0000/1024 VUs, 477 complete and 0 interrupted iterations
+warmup                         [  95% ] 000/256 VUs  4.8s/5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      12.2s   
+cross_ledger_transfer        • [   0% ] waiting      12.2s   
+idempotent_duplicate_posting • [   0% ] waiting      12.2s   
+normal_balanced_posting      • [   0% ] waiting      12.2s   
+
+running (05.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      11.2s
+cross_ledger_transfer        • [   0% ] waiting      11.2s
+idempotent_duplicate_posting • [   0% ] waiting      11.2s
+normal_balanced_posting      • [   0% ] waiting      11.2s
+
+running (06.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      10.2s
+cross_ledger_transfer        • [   0% ] waiting      10.2s
+idempotent_duplicate_posting • [   0% ] waiting      10.2s
+normal_balanced_posting      • [   0% ] waiting      10.2s
+
+running (07.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      09.2s
+cross_ledger_transfer        • [   0% ] waiting      09.2s
+idempotent_duplicate_posting • [   0% ] waiting      09.2s
+normal_balanced_posting      • [   0% ] waiting      09.2s
+
+running (08.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      08.2s
+cross_ledger_transfer        • [   0% ] waiting      08.2s
+idempotent_duplicate_posting • [   0% ] waiting      08.2s
+normal_balanced_posting      • [   0% ] waiting      08.2s
+
+running (09.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      07.2s
+cross_ledger_transfer        • [   0% ] waiting      07.2s
+idempotent_duplicate_posting • [   0% ] waiting      07.2s
+normal_balanced_posting      • [   0% ] waiting      07.2s
+
+running (10.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      06.2s
+cross_ledger_transfer        • [   0% ] waiting      06.2s
+idempotent_duplicate_posting • [   0% ] waiting      06.2s
+normal_balanced_posting      • [   0% ] waiting      06.2s
+
+running (11.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      05.2s
+cross_ledger_transfer        • [   0% ] waiting      05.2s
+idempotent_duplicate_posting • [   0% ] waiting      05.2s
+normal_balanced_posting      • [   0% ] waiting      05.2s
+
+running (12.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      04.2s
+cross_ledger_transfer        • [   0% ] waiting      04.2s
+idempotent_duplicate_posting • [   0% ] waiting      04.2s
+normal_balanced_posting      • [   0% ] waiting      04.2s
+
+running (13.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      03.2s
+cross_ledger_transfer        • [   0% ] waiting      03.2s
+idempotent_duplicate_posting • [   0% ] waiting      03.2s
+normal_balanced_posting      • [   0% ] waiting      03.2s
+
+running (14.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      02.2s
+cross_ledger_transfer        • [   0% ] waiting      02.2s
+idempotent_duplicate_posting • [   0% ] waiting      02.2s
+normal_balanced_posting      • [   0% ] waiting      02.2s
+
+running (15.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      01.2s
+cross_ledger_transfer        • [   0% ] waiting      01.2s
+idempotent_duplicate_posting • [   0% ] waiting      01.2s
+normal_balanced_posting      • [   0% ] waiting      01.2s
+
+running (16.8s), 0000/1024 VUs, 501 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s  100.00 iters/s
+aggregate_event_ingestion    • [   0% ] waiting      00.2s
+cross_ledger_transfer        • [   0% ] waiting      00.2s
+idempotent_duplicate_posting • [   0% ] waiting      00.2s
+normal_balanced_posting      • [   0% ] waiting      00.2s
+
+running (17.8s), 0046/1024 VUs, 1221 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [   8% ] 022/256 VUs  00.8s/10s  150.00 iters/s
+cross_ledger_transfer          [   8% ] 010/256 VUs  00.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [   8% ] 001/256 VUs  00.8s/10s  200.00 iters/s
+normal_balanced_posting        [   8% ] 013/256 VUs  00.8s/10s  500.00 iters/s
+
+running (18.8s), 0013/1024 VUs, 2254 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  18% ] 005/256 VUs  01.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  18% ] 002/256 VUs  01.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  18% ] 001/256 VUs  01.8s/10s  200.00 iters/s
+normal_balanced_posting        [  18% ] 005/256 VUs  01.8s/10s  500.00 iters/s
+
+running (19.8s), 0008/1024 VUs, 3258 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  28% ] 003/256 VUs  02.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  28% ] 002/256 VUs  02.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  28% ] 000/256 VUs  02.8s/10s  200.00 iters/s
+normal_balanced_posting        [  28% ] 003/256 VUs  02.8s/10s  500.00 iters/s
+
+running (20.8s), 0012/1024 VUs, 4255 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  38% ] 004/256 VUs  03.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  38% ] 003/256 VUs  03.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  38% ] 000/256 VUs  03.8s/10s  200.00 iters/s
+normal_balanced_posting        [  38% ] 005/256 VUs  03.8s/10s  500.00 iters/s
+
+running (21.8s), 0010/1024 VUs, 5258 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  48% ] 003/256 VUs  04.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  48% ] 002/256 VUs  04.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  48% ] 001/256 VUs  04.8s/10s  200.00 iters/s
+normal_balanced_posting        [  48% ] 004/256 VUs  04.8s/10s  500.00 iters/s
+
+running (22.8s), 0053/1024 VUs, 6214 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  58% ] 011/256 VUs  05.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  58% ] 011/256 VUs  05.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  58% ] 002/256 VUs  05.8s/10s  200.00 iters/s
+normal_balanced_posting        [  58% ] 029/256 VUs  05.8s/10s  500.00 iters/s
+
+running (23.8s), 0015/1024 VUs, 7253 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  68% ] 006/256 VUs  06.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  68% ] 004/256 VUs  06.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  68% ] 001/256 VUs  06.8s/10s  200.00 iters/s
+normal_balanced_posting        [  68% ] 005/256 VUs  06.8s/10s  500.00 iters/s
+
+running (24.8s), 0007/1024 VUs, 8259 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  78% ] 002/256 VUs  07.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  78% ] 002/256 VUs  07.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  78% ] 000/256 VUs  07.8s/10s  200.00 iters/s
+normal_balanced_posting        [  78% ] 003/256 VUs  07.8s/10s  500.00 iters/s
+
+running (25.8s), 0011/1024 VUs, 9256 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  88% ] 004/256 VUs  08.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  88% ] 004/256 VUs  08.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  88% ] 000/256 VUs  08.8s/10s  200.00 iters/s
+normal_balanced_posting        [  88% ] 003/256 VUs  08.8s/10s  500.00 iters/s
+
+running (26.8s), 0009/1024 VUs, 10259 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s         100.00 iters/s
+aggregate_event_ingestion      [  98% ] 003/256 VUs  09.8s/10s  150.00 iters/s
+cross_ledger_transfer          [  98% ] 002/256 VUs  09.8s/10s  150.00 iters/s
+idempotent_duplicate_posting   [  98% ] 001/256 VUs  09.8s/10s  200.00 iters/s
+normal_balanced_posting        [  98% ] 003/256 VUs  09.8s/10s  500.00 iters/s
+
+     ✓ duplicate posting returns 200
+     ✓ duplicate posting returns the seeded transaction
+     ✓ duplicate posting response is balanced
+     ✓ normal posting returns 201
+     ✓ normal posting returns a transaction
+     ✓ normal posting response is balanced
+     ✓ aggregate source posting returns 201
+     ✓ aggregate source returns a transaction
+     ✓ aggregate source response is balanced
+     ✓ transfer enqueue returns 202
+     ✓ transfer enqueue returns an id
+     ✓ transfer enqueue is pending
+     ✓ transfer response preserves boundaries
+
+     checks.......................................................: 100.00% 33087 out of 33087
+     data_received................................................: 7.6 MB  281 kB/s
+     data_sent....................................................: 4.5 MB  166 kB/s
+     dropped_iterations...........................................: 0       0/s
+     ✓ { scenario:aggregate_event_ingestion }.....................: 0       0/s
+     ✓ { scenario:cross_ledger_transfer }.........................: 0       0/s
+     ✓ { scenario:idempotent_duplicate_posting }..................: 0       0/s
+     ✓ { scenario:normal_balanced_posting }.......................: 0       0/s
+     http_req_blocked.............................................: avg=451.33µs min=875ns    p(50)=2.7µs   p(90)=18.27µs  p(95)=1.78ms   p(99)=9.88ms   max=103.27ms
+     http_req_connecting..........................................: avg=433.98µs min=0s       p(50)=0s      p(90)=0s       p(95)=1.69ms   p(99)=9.45ms   max=103.18ms
+     http_req_duration............................................: avg=12.64ms  min=740.83µs p(50)=8ms     p(90)=21.16ms  p(95)=32.99ms  p(99)=119.36ms max=268.98ms
+       { expected_response:true }.................................: avg=12.64ms  min=740.83µs p(50)=8ms     p(90)=21.16ms  p(95)=32.99ms  p(99)=119.36ms max=268.98ms
+     http_req_failed..............................................: 0.00%   0 out of 13655
+     http_req_receiving...........................................: avg=71.31µs  min=6µs      p(50)=27.33µs p(90)=127.45µs p(95)=226.79µs p(99)=770.76µs max=7.67ms  
+     http_req_sending.............................................: avg=37.25µs  min=2.7µs    p(50)=10.66µs p(90)=52.92µs  p(95)=120.62µs p(99)=506.39µs max=6.33ms  
+     http_req_tls_handshaking.....................................: avg=0s       min=0s       p(50)=0s      p(90)=0s       p(95)=0s       p(99)=0s       max=0s      
+     http_req_waiting.............................................: avg=12.53ms  min=693.58µs p(50)=7.9ms   p(90)=21.04ms  p(95)=32.97ms  p(99)=118.64ms max=268.96ms
+     http_reqs....................................................: 13655   505.367067/s
+     iteration_duration...........................................: avg=17.61ms  min=1.05ms   p(50)=8.92ms  p(90)=31.41ms  p(95)=50.04ms  p(99)=165.46ms max=347.83ms
+     iterations...................................................: 10504   388.749592/s
+     ledger_error_rate............................................: 0.00%   0 out of 10003
+     ✓ { phase:measure,operation:aggregate_event_ingestion }......: 0.00%   0 out of 1501
+     ✓ { phase:measure,operation:cross_ledger_transfer }..........: 0.00%   0 out of 1500
+     ✓ { phase:measure,operation:idempotent_duplicate_posting }...: 0.00%   0 out of 2001
+     ✓ { phase:measure,operation:normal_balanced_posting }........: 0.00%   0 out of 5001
+     ✓ { phase:measure }..........................................: 0.00%   0 out of 10003
+     ledger_logical_operations....................................: 10003   370.207746/s
+     ✓ { phase:measure,operation:aggregate_event_ingestion }......: 1501    55.551517/s
+     ✓ { phase:measure,operation:cross_ledger_transfer }..........: 1500    55.514508/s
+     ✓ { phase:measure,operation:idempotent_duplicate_posting }...: 2001    74.056353/s
+     ✓ { phase:measure,operation:normal_balanced_posting }........: 5001    185.085368/s
+     ledger_operation_latency_ms..................................: avg=17.29ms  min=861.16µs p(50)=8.54ms  p(90)=31ms     p(95)=49.21ms  p(99)=153.72ms max=348ms   
+     ✗ { phase:measure,operation:aggregate_event_ingestion }......: avg=38.45ms  min=14ms     p(50)=26ms    p(90)=56ms     p(95)=83ms     p(99)=295ms    max=337ms   
+     ✗ { phase:measure,operation:cross_ledger_transfer }..........: avg=29.54ms  min=10ms     p(50)=20ms    p(90)=40ms     p(95)=74.04ms  p(99)=239.02ms max=348ms   
+     ✓ { phase:measure,operation:idempotent_duplicate_posting }...: avg=3.5ms    min=861.16µs p(50)=2.05ms  p(90)=4.36ms   p(95)=8.35ms   p(99)=31.38ms  max=142.46ms
+     ✗ { phase:measure,operation:normal_balanced_posting }........: avg=12.78ms  min=3.66ms   p(50)=7.61ms  p(90)=19.36ms  p(95)=38.59ms  p(99)=120.17ms max=200.67ms
+     ✗ { phase:measure }..........................................: avg=17.29ms  min=861.16µs p(50)=8.54ms  p(90)=31ms     p(95)=49.21ms  p(99)=153.72ms max=348ms   
+     ledger_projection_error_rate.................................: 0.00%   0 out of 1501
+     ledger_projection_lag_ms.....................................: avg=38.41ms  min=14ms     p(50)=26ms    p(90)=56ms     p(95)=83ms     p(99)=295ms    max=337ms   
+     ledger_successful_logical_operations.........................: 10003   370.207746/s
+     ledger_transfer_completion_error_rate........................: 0.00%   0 out of 1500
+     ledger_transfer_completion_lag_ms............................: avg=29.51ms  min=10ms     p(50)=20ms    p(90)=40ms     p(95)=74.04ms  p(99)=239.02ms max=348ms   
+     vus..........................................................: 8       min=0              max=55  
+     vus_max......................................................: 1024    min=1024           max=1024
+
+
+running (27.0s), 0000/1024 VUs, 10504 complete and 0 interrupted iterations
+warmup                       ✓ [ 100% ] 000/256 VUs  5s   100.00 iters/s
+aggregate_event_ingestion    ✓ [ 100% ] 000/256 VUs  10s  150.00 iters/s
+cross_ledger_transfer        ✓ [ 100% ] 000/256 VUs  10s  150.00 iters/s
+idempotent_duplicate_posting ✓ [ 100% ] 000/256 VUs  10s  200.00 iters/s
+normal_balanced_posting      ✓ [ 100% ] 000/256 VUs  10s  500.00 iters/s
+time="2026-08-21T15:03:04Z" level=error msg="thresholds on metrics 'ledger_operation_latency_ms{phase:measure,operation:aggregate_event_ingestion}, ledger_operation_latency_ms{phase:measure,operation:cross_ledger_transfer}, ledger_operation_latency_ms{phase:measure,operation:normal_balanced_posting}, ledger_operation_latency_ms{phase:measure}' have been crossed"

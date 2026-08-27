@@ -154,6 +154,23 @@ func (s *PostgresStore) ProcessOutbox(limit int) (int, error) {
 	if limit <= 0 {
 		limit = 100
 	}
+	return s.processDestinationCreditBatch(context.Background(), limit)
+}
+
+// ProcessCompensationOutbox drains the rare compensating source credits on a
+// separate worker so idle destination workers do not open a second empty
+// transaction on every pass.
+func (s *PostgresStore) ProcessCompensationOutbox(limit int) (int, error) {
+	return s.processTransferOutboxIndividually(limit)
+}
+
+// processTransferOutboxIndividually retains the compensation and permanent
+// failure path. The normal destination-credit path is handled in a single
+// multi-saga transaction by processDestinationCreditBatch.
+func (s *PostgresStore) processTransferOutboxIndividually(limit int) (int, error) {
+	if limit <= 0 {
+		limit = 100
+	}
 	completed := 0
 	for completed < limit {
 		ctx := context.Background()
@@ -164,7 +181,7 @@ func (s *PostgresStore) ProcessOutbox(limit int) (int, error) {
 		var eventID, sagaID uuid.UUID
 		var typ string
 		var attempts int
-		err = tx.QueryRowContext(ctx, `SELECT id, saga_id, event_type, attempt_count FROM outbox_events WHERE status = 'pending' AND event_type IN ('destination_credit', 'compensate_source') AND available_at <= NOW() ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1`).Scan(&eventID, &sagaID, &typ, &attempts)
+		err = tx.QueryRowContext(ctx, `SELECT id, saga_id, event_type, attempt_count FROM outbox_events WHERE status = 'pending' AND event_type='compensate_source' AND available_at <= NOW() ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1`).Scan(&eventID, &sagaID, &typ, &attempts)
 		if errors.Is(err, sql.ErrNoRows) {
 			tx.Rollback()
 			break
