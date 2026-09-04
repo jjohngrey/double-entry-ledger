@@ -31,6 +31,11 @@ environment, post-load backlog, database plans, pool stats, and CPU/heap
 profiles. When it owns the server process, the runner refuses to start if an
 HTTP service is already responding on the benchmark address.
 
+`db-stats-before.json` and `db-stats-after.json` bracket the configured
+measurement window. `db-stats-delta.json` reports connection waits and wait
+duration added during that window for every dedicated pool, avoiding misleading
+process-lifetime counters.
+
 ## Workload and seed
 
 `cmd/benchmark-seed` migrates and resets `ledger_benchmark`, clears the isolated
@@ -93,7 +98,7 @@ Key variables and defaults:
 | `DB_MAX_IDLE_CONNS` | `90` | Go pool idle cap |
 | `DB_TRANSFER_POOL_CONNS` | `2` | Sessions reserved for transfer completion |
 | `DB_PUBLISHER_POOL_CONNS` | `14` | Sessions reserved for outbox publication |
-| `DB_AGGREGATE_POOL_CONNS` | `4` | Sessions reserved for aggregate projection; remaining 70 serve foreground work |
+| `DB_AGGREGATE_POOL_CONNS` | `4` | Sessions reserved for aggregate projection when projection storage is not split |
 | `DB_CONN_MAX_LIFETIME` | `30m` | Connection lifetime |
 | `DB_CONN_MAX_IDLE_TIME` | `5m` | Idle expiry |
 | `BENCHMARK_PROJECTION_DATABASE_URL` | empty | Optional distinct database for durable aggregate projection state |
@@ -113,7 +118,7 @@ Key variables and defaults:
 | `BENCHMARK_CHANGE_UNDER_TEST` | `unspecified` | Exact implementation change being measured |
 | `BENCHMARK_OBJECTIVE` | configured workload | Question the run should answer |
 | `POLL_INTERVAL_SECONDS` | `0.01` | k6 projection/saga observation interval |
-| `PRE_ALLOCATED_VUS` / `MAX_VUS` | target-dependent | Generator concurrency cap |
+| `PRE_ALLOCATED_VUS` / `MAX_VUS` | scenario-derived | Optional shared override; automatic capacity is based on each scenario's offered rate and expected latency |
 
 The runner disables per-request server logging. It resolves/pulls the pinned k6
 image before environment capture. `environment.txt` records machine/OS, Go and

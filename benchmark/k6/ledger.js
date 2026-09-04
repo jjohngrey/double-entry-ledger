@@ -65,10 +65,7 @@ const transferCapacity = capacityFor(
   rates.cross_ledger_transfer,
   POLL_TRANSFER_COMPLETION ? 2 : 0.25,
 );
-const aggregateCapacity = capCapacityToRows(
-  capacityFor(rates.aggregate_event_ingestion, 2),
-  aggregateRows.length,
-);
+const aggregateCapacity = capacityFor(rates.aggregate_event_ingestion, 2);
 const measuredStart = `${durationMilliseconds(WARMUP_DURATION)
   + durationMilliseconds(WARMUP_GRACEFUL_STOP)
   + durationMilliseconds(WARMUP_SETTLE_DURATION)}ms`;
@@ -533,12 +530,6 @@ function capacityFor(rate, estimatedSeconds) {
   if (maxVUs < preAllocatedVUs) {
     throw new Error('MAX_VUS must be greater than or equal to PRE_ALLOCATED_VUS');
   }
-  return { preAllocatedVUs, maxVUs };
-}
-
-function capCapacityToRows(capacity, rowCount) {
-  const maxVUs = Math.max(1, Math.min(capacity.maxVUs, rowCount));
-  const preAllocatedVUs = Math.max(1, Math.min(capacity.preAllocatedVUs, maxVUs));
   return { preAllocatedVUs, maxVUs };
 }
 

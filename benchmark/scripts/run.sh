@@ -65,6 +65,7 @@ export BENCHMARK_STAGE BENCHMARK_PREDECESSOR BENCHMARK_CHANGE_UNDER_TEST BENCHMA
 TMP_RUN_DIR=$(mktemp -d "${TMPDIR:-/tmp}/double-entry-ledger-benchmark.XXXXXX")
 SERVER_PID=
 PROFILE_PID=
+DIAGNOSTICS_PID=
 
 cleanup() {
   if [ -n "$SERVER_PID" ]; then
@@ -73,6 +74,10 @@ cleanup() {
   fi
   if [ -n "$PROFILE_PID" ]; then
     wait "$PROFILE_PID" 2>/dev/null || true
+  fi
+  if [ -n "$DIAGNOSTICS_PID" ]; then
+    kill "$DIAGNOSTICS_PID" 2>/dev/null || true
+    wait "$DIAGNOSTICS_PID" 2>/dev/null || true
   fi
   rm -rf "$TMP_RUN_DIR"
 }
@@ -135,10 +140,6 @@ fi
 
 PRE_ALLOCATED_VUS=${PRE_ALLOCATED_VUS:-}
 MAX_VUS=${MAX_VUS:-}
-if [ "$TARGET_TPS" -ge 1000 ]; then
-  PRE_ALLOCATED_VUS=${PRE_ALLOCATED_VUS:-256}
-  MAX_VUS=${MAX_VUS:-512}
-fi
 
 if ! command -v k6 >/dev/null 2>&1; then
   if ! docker image inspect "$K6_IMAGE" >/dev/null 2>&1; then
@@ -157,6 +158,35 @@ export AGGREGATE_WORKERS AGGREGATE_FETCH_BATCH POLL_TRANSFER_COMPLETION K6_IMAGE
 export POSTING_BATCH_SIZE POSTING_BATCH_WAIT POSTING_BATCH_WORKERS
 export POLL_INTERVAL_SECONDS PRE_ALLOCATED_VUS MAX_VUS
 "$SCRIPT_DIR/capture-environment.sh" "$RESULT_DIR/environment.txt"
+
+DIAGNOSTIC_DELAY_SECONDS=$(python3 - "$WARMUP_DURATION" "$WARMUP_GRACEFUL_STOP" "$WARMUP_SETTLE_DURATION" <<'PY'
+import re, sys
+scale = {'ms': .001, 's': 1, 'm': 60, 'h': 3600}
+def seconds(raw):
+    return sum(float(value) * scale[unit] for value, unit in re.findall(r'(\d+(?:\.\d+)?)(ms|s|m|h)', raw.replace(' ', '')))
+print(sum(seconds(value) for value in sys.argv[1:]))
+PY
+)
+MEASUREMENT_SECONDS=$(python3 - "$DURATION" <<'PY'
+import re, sys
+scale = {'ms': .001, 's': 1, 'm': 60, 'h': 3600}
+print(sum(float(value) * scale[unit] for value, unit in re.findall(r'(\d+(?:\.\d+)?)(ms|s|m|h)', sys.argv[1].replace(' ', ''))))
+PY
+)
+(
+  sleep "$DIAGNOSTIC_DELAY_SECONDS"
+  curl --silent --show-error --fail --output "$RESULT_DIR/db-stats-before.json" \
+    "$PPROF_URL/debug/db-stats" || true
+  sleep "$MEASUREMENT_SECONDS"
+  curl --silent --show-error --fail --output "$RESULT_DIR/db-stats-after.json" \
+    "$PPROF_URL/debug/db-stats" || true
+  if [ -s "$RESULT_DIR/db-stats-before.json" ] && [ -s "$RESULT_DIR/db-stats-after.json" ]; then
+    "$SCRIPT_DIR/summarize-db-stats.py" \
+      "$RESULT_DIR/db-stats-before.json" "$RESULT_DIR/db-stats-after.json" \
+      --output "$RESULT_DIR/db-stats-delta.json"
+  fi
+) > "$RESULT_DIR/diagnostic-capture.log" 2>&1 &
+DIAGNOSTICS_PID=$!
 
 if [ "$CAPTURE_PROFILES" = "1" ]; then
   PROFILE_DELAY_SECONDS=$(python3 - "$WARMUP_DURATION" "$WARMUP_GRACEFUL_STOP" "$WARMUP_SETTLE_DURATION" <<'PY'
@@ -234,6 +264,10 @@ fi
 if [ -n "$PROFILE_PID" ]; then
   wait "$PROFILE_PID" || true
   PROFILE_PID=
+fi
+if [ -n "$DIAGNOSTICS_PID" ]; then
+  wait "$DIAGNOSTICS_PID" || true
+  DIAGNOSTICS_PID=
 fi
 curl --silent --show-error --fail --output "$RESULT_DIR/db-stats-final.json" \
   "$PPROF_URL/debug/db-stats" 2>/dev/null || true
