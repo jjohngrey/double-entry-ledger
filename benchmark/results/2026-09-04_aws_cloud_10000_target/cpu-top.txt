@@ -1,0 +1,39 @@
+File: ledger-profile
+Build ID: 09266e8bb9c140b4e70bfce5568aed490ff17380
+Type: cpu
+Time: 2026-09-04 10:43:41 UTC
+Duration: 30s, Total samples = 51.61s (172.03%)
+Showing nodes accounting for 20.78s, 40.26% of 51.61s total
+Dropped 1083 nodes (cum <= 0.26s)
+Showing top 30 nodes out of 365
+      flat  flat%   sum%        cum   cum%
+     7.26s 14.07% 14.07%      7.26s 14.07%  internal/runtime/syscall/linux.Syscall6
+     1.39s  2.69% 16.76%      1.40s  2.71%  runtime.nextFreeFast (inline)
+     1.06s  2.05% 18.81%      1.06s  2.05%  runtime.futex
+        1s  1.94% 20.75%      1.24s  2.40%  runtime.tryDeferToSpanScan
+     0.98s  1.90% 22.65%      0.98s  1.90%  runtime.memmove
+     0.60s  1.16% 23.81%      3.31s  6.41%  runtime.mallocgcSmallScanNoHeader
+     0.56s  1.09% 24.90%      8.65s 16.76%  runtime.mallocgc
+     0.51s  0.99% 25.89%      1.14s  2.21%  runtime.pcvalue
+     0.49s  0.95% 26.84%      0.53s  1.03%  runtime.step
+     0.48s  0.93% 27.77%      0.61s  1.18%  runtime.(*mspan).writeHeapBitsSmall
+     0.47s  0.91% 28.68%      2.21s  4.28%  runtime.mallocgcSmallNoscan
+     0.41s  0.79% 29.47%      0.41s  0.79%  runtime.memclrNoHeapPointers
+     0.40s  0.78% 30.25%      0.41s  0.79%  internal/sync.(*Mutex).Lock
+     0.38s  0.74% 30.98%      0.44s  0.85%  runtime.findObject
+     0.38s  0.74% 31.72%      0.57s  1.10%  runtime.mapaccess2_fast32
+     0.36s   0.7% 32.42%      0.49s  0.95%  runtime.mapaccess2_faststr
+     0.35s  0.68% 33.09%      0.89s  1.72%  runtime.(*unwinder).resolveInternal
+     0.32s  0.62% 33.71%      2.65s  5.13%  fmt.(*pp).doPrintf
+     0.31s   0.6% 34.32%      0.71s  1.38%  strconv.appendEscapedRune
+     0.30s  0.58% 34.90%      0.30s  0.58%  encoding/hex.Encode
+     0.30s  0.58% 35.48%      0.30s  0.58%  internal/runtime/atomic.(*Uint32).CompareAndSwap
+     0.30s  0.58% 36.06%      0.30s  0.58%  strconv.IsPrint
+     0.29s  0.56% 36.62%      0.32s  0.62%  encoding/json.appendString[go.shape.string]
+     0.29s  0.56% 37.18%      0.29s  0.56%  runtime.markBits.setMarked (inline)
+     0.29s  0.56% 37.74%      4.75s  9.20%  runtime.newobject
+     0.28s  0.54% 38.29%      0.28s  0.54%  internal/runtime/atomic.(*Uint64).Add (inline)
+     0.28s  0.54% 38.83%      1.02s  1.98%  runtime.(*stkframe).getStackMap
+     0.26s   0.5% 39.33%      1.11s  2.15%  runtime.scanObjectsSmall
+     0.24s  0.47% 39.80%      0.26s   0.5%  encoding/json.stateInString
+     0.24s  0.47% 40.26%      2.07s  4.01%  github.com/jackc/pgx/v5/pgtype.(*Map).planEncode

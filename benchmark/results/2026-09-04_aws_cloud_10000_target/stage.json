@@ -1,0 +1,23 @@
+{
+  "stage": "aws_cloud_10000_target",
+  "purpose": "Evaluate the 10,000 operations per second and p99 below 50 ms acceptance target on paid AWS infrastructure.",
+  "git_commit": "36dceb97e84d5765c2bb3c5f25a072c54ab82d6e",
+  "pre_run_steps": [
+    "Completed the 1,000 operations per second control run with zero logical errors.",
+    "Kept synchronous_commit enabled to preserve ledger durability.",
+    "Configured a 90 connection OLTP application budget split into 74 foreground, 2 transfer, and 14 publisher connections.",
+    "Configured a separate 20 connection projection database pool used by 4 aggregate workers.",
+    "Configured posting batches of 64 with 4 workers and a 500 microsecond collection window.",
+    "Configured transfer batches of 100 with 1 worker.",
+    "Configured 16 asynchronous publisher workers with 256 maximum pending acknowledgements.",
+    "Configured aggregate batches of 64 with 4 workers.",
+    "Enabled CPU and heap profiling and database-statistics snapshots.",
+    "Ran a 15 second warm-up followed by a 30 second measured test at 10,000 requested operations per second."
+  ],
+  "acceptance": {
+    "throughput_ops_per_second": 10000,
+    "p99_latency_ms_less_than": 50,
+    "logical_error_rate": 0
+  },
+  "result": "failed_throughput_and_latency_thresholds"
+}

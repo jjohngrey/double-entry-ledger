@@ -1,0 +1,66 @@
+{
+  "measurement_duration_seconds": 15.0,
+  "operations": {
+    "aggregate_event_ingestion": {
+      "count": 2250,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 16.0,
+        "p95": 20.0,
+        "p99": 100.53
+      },
+      "successful_count": 2250,
+      "successful_throughput_ops_per_second": 150.0,
+      "throughput_ops_per_second": 150.0
+    },
+    "cross_ledger_transfer": {
+      "count": 2251,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 14.0,
+        "p95": 23.0,
+        "p99": 61.5
+      },
+      "successful_count": 2251,
+      "successful_throughput_ops_per_second": 150.067,
+      "throughput_ops_per_second": 150.067
+    },
+    "idempotent_duplicate_posting": {
+      "count": 3001,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 1.283,
+        "p95": 1.447,
+        "p99": 2.315
+      },
+      "successful_count": 3001,
+      "successful_throughput_ops_per_second": 200.067,
+      "throughput_ops_per_second": 200.067
+    },
+    "normal_balanced_posting": {
+      "count": 7501,
+      "error_rate": 0.0,
+      "latency_ms": {
+        "p50": 5.142,
+        "p95": 5.947,
+        "p99": 50.004
+      },
+      "successful_count": 7501,
+      "successful_throughput_ops_per_second": 500.067,
+      "throughput_ops_per_second": 500.067
+    }
+  },
+  "overall": {
+    "count": 15003,
+    "error_rate": 0.0,
+    "latency_ms": {
+      "p50": 5.34,
+      "p95": 19.0,
+      "p99": 52.0
+    },
+    "successful_count": 15003,
+    "successful_throughput_ops_per_second": 1000.2,
+    "throughput_ops_per_second": 1000.2
+  },
+  "throughput_semantics": "measurement-tagged completions divided by the configured arrival window; completions during graceful stop are included, so this is admission-window yield rather than wall-clock drain rate"
+}

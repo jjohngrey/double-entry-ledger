@@ -1,0 +1,13 @@
+● ledger.service
+     Loaded: loaded (/etc/systemd/system/ledger.service; enabled; preset: disabled)
+     Active: active (running) since Fri 2026-09-04 10:32:59 UTC; 55min ago
+   Main PID: 33281 (ledger)
+      Tasks: 10 (limit: 9298)
+     Memory: 134.7M
+        CPU: 9min 58.284s
+     CGroup: /system.slice/ledger.service
+             └─33281 /usr/local/bin/ledger
+
+Sep 04 10:32:59 ip-10-40-2-218.us-west-2.compute.internal systemd[1]: Started ledger.service.
+Sep 04 10:32:59 ip-10-40-2-218.us-west-2.compute.internal ledger[33281]: Starting server on 0.0.0.0:3000
+Sep 04 10:32:59 ip-10-40-2-218.us-west-2.compute.internal ledger[33281]: Starting diagnostics on 0.0.0.0:6060

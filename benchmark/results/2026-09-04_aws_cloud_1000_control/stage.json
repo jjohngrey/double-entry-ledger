@@ -1,0 +1,17 @@
+{
+  "stage": "aws_cloud_1000_control",
+  "purpose": "Validate the remote topology, seeded data, scenario correctness, and metrics pipeline before the target run.",
+  "git_commit": "36dceb97e84d5765c2bb3c5f25a072c54ab82d6e",
+  "pre_run_steps": [
+    "Created two isolated temporary RDS PostgreSQL 18.3 databases for OLTP and aggregate projection work.",
+    "Provisioned separate c7g.xlarge EC2 instances for the API plus NATS and for k6.",
+    "Deployed the exact git commit recorded above and enabled the pprof endpoint.",
+    "Started NATS 2.11.17 with JetStream on the API host.",
+    "Applied OLTP and projection migrations to the temporary databases.",
+    "Seeded 5,634 accounts, 101,024 transactions, and 202,048 entries.",
+    "Verified the API health endpoint and private network path from the k6 host.",
+    "Ran a 15 second warm-up followed by a 15 second measured test at 1,000 requested operations per second."
+  ],
+  "acceptance_role": "control_only",
+  "result": "completed_without_logical_errors"
+}

@@ -1,0 +1,6 @@
+?   	github.com/jjohngrey/double-entry-ledger/cmd/benchmark-seed	[no test files]
+ok  	github.com/jjohngrey/double-entry-ledger/cmd/ledger	0.004s
+?   	github.com/jjohngrey/double-entry-ledger/internal/db	[no test files]
+ok  	github.com/jjohngrey/double-entry-ledger/internal/http	0.005s
+ok  	github.com/jjohngrey/double-entry-ledger/internal/ledger	0.005s
+exit_code=0

@@ -1,0 +1,27 @@
+File: ledger-profile
+Build ID: 09266e8bb9c140b4e70bfce5568aed490ff17380
+Type: inuse_space
+Time: 2026-09-04 10:44:11 UTC
+Showing nodes accounting for 89.54MB, 90.86% of 98.54MB total
+Showing top 20 nodes out of 228
+      flat  flat%   sum%        cum   cum%
+   20.68MB 20.98% 20.98%    20.68MB 20.98%  strings.(*Builder).Write
+   15.06MB 15.28% 36.26%    15.06MB 15.28%  bufio.NewWriterSize
+   14.02MB 14.23% 50.49%    15.03MB 15.25%  github.com/jackc/pgx/v5/pgconn.(*PgConn).Prepare
+   13.05MB 13.24% 63.74%    13.05MB 13.24%  bufio.NewReaderSize
+    8.20MB  8.32% 72.06%     8.20MB  8.32%  github.com/jackc/pgx/v5/internal/stmtcache.NewLRUCache (inline)
+    3.03MB  3.07% 75.13%     3.03MB  3.07%  strings.(*Builder).WriteString (inline)
+       3MB  3.04% 78.17%        3MB  3.04%  context.(*cancelCtx).propagateCancel
+    2.52MB  2.56% 80.73%     2.52MB  2.56%  bytes.growSlice
+    2.50MB  2.54% 83.27%     2.50MB  2.54%  runtime.mallocgc
+    1.16MB  1.17% 84.44%     1.16MB  1.17%  runtime/pprof.StartCPUProfile
+    1.01MB  1.02% 85.47%     1.01MB  1.02%  github.com/jackc/pgx/v5/internal/iobufpool.init.0.func1
+       1MB  1.01% 86.48%        1MB  1.01%  encoding/json.(*decodeState).literalStore
+    0.79MB   0.8% 87.28%     0.79MB   0.8%  github.com/nats-io/nats%2ego.(*js).PullSubscribe
+    0.51MB  0.51% 87.80%    14.55MB 14.76%  github.com/jjohngrey/double-entry-ledger/internal/ledger.(*PostgresStore).ApplyTransactionPostedBatch
+    0.51MB  0.51% 88.31%    11.03MB 11.19%  github.com/jjohngrey/double-entry-ledger/internal/ledger.upsertAggregateDeltas
+    0.50MB  0.51% 88.82%     0.50MB  0.51%  github.com/jackc/pgx/v5/pgproto3.(*Bind).Encode
+    0.50MB  0.51% 89.33%     0.50MB  0.51%  io.init.func1
+    0.50MB  0.51% 89.85%    15.53MB 15.76%  github.com/jackc/pgx/v5.(*Conn).Prepare
+    0.50MB  0.51% 90.35%     0.50MB  0.51%  github.com/jackc/pgx/v5/pgtype.encodePlanUUIDCodecBinaryUUIDValuer.Encode
+    0.50MB  0.51% 90.86%     0.50MB  0.51%  github.com/jackc/pgx/v5/pgproto3.(*ParameterDescription).Decode

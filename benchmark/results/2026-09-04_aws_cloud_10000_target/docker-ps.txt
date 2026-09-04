@@ -1,0 +1,2 @@
+CONTAINER ID                                                       IMAGE                 COMMAND                                CREATED             STATUS             PORTS     NAMES
+8e9ad2ca41519a31bbbbf480db79f616ac75a7faed9128bb5249df8c869db2df   nats:2.11.17-alpine   "docker-entrypoint.sh -js -sd /data"   About an hour ago   Up About an hour             nats
